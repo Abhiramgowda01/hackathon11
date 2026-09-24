@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CCTV AI Monitor</title>
+
+    <style>
+
+        :root {
+            --bg: #0f1216;
+            --panel: #171b21;
+            --border: #262b33;
+            --text: #e6e9ee;
+            --muted: #8b93a1;
+            --accent: #4f8cff;
+            --danger: #ff5470;
+            --success: #39d98a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        header .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        select,
+        button {
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        main {
+            padding: 20px 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* =========================
+           LIVE CAMERA
+           ========================= */
+
+        .camera-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .camera-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .camera-status {
+            font-size: 12px;
+            color: var(--success);
+        }
+
+        .camera-container {
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        #liveCamera {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 650px;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .camera-error {
+            color: var(--muted);
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        /* =========================
+           STATISTICS
+           ========================= */
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat {
+            flex: 1;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .stat .label {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .stat .value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* =========================
+           EVENTS
+           ========================= */
+
+        .event {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .event.anomaly {
+            border-color: var(--danger);
+            background: #241419;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+            background: #263047;
+            color: var(--accent);
+        }
+
+        .badge.anomaly {
+            background: #3a1420;
+            color: var(--danger);
+        }
+
+        .event-body {
+            flex: 1;
+        }
+
+        .event-meta {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .event-desc {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        @media (max-width: 700px) {
+
+            header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            header .controls {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .camera-container {
+                min-height: 250px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <h1>🎥 CCTV AI Monitor</h1>
+
+    <div class="controls">
+
+        <select id="cameraFilter">
+            <option value="">All cameras</option>
+        </select>
+
+        <button id="anomalyToggle">
+            Show all
+        </button>
+
+        <button class="primary" id="refreshBtn">
+            Refresh
+        </button>
+
+    </div>
+
+</header>
+
+
+<main>
+
+    <!-- =========================
+         LIVE CAMERA
+         ========================= -->
+
+    <section class="camera-panel">
+
+        <div class="camera-header">
+
+            <div class="camera-title">
+                📹 Live AI Camera
+            </div>
+
+            <div
+                    class="camera-status"
+                    id="cameraStatus">
+                ● Connecting...
+            </div>
+
+        </div>
+
+        <div class="camera-container">
+
+            <img
+                    id="liveCamera"
+                    alt="Live CCTV camera"
+            >
+
+            <div
+                    id="cameraError"
+                    class="camera-error"
+                    style="display: none;">
+
+                Camera frame is not available.
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         STATISTICS
+         ========================= -->
+
+    <div class="stats">
+
+        <div class="stat">
+
+            <div class="label">
+                Total events
+            </div>
+
+            <div
+                    class="value"
+                    id="statTotal">
+                0
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="label">
+                Anomalies
+            </div>
+
+            <div
+                    class="value"
+                    id="statAnomalies">
+                0
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="label">
+                Cameras
+            </div>
+
+            <div
+                    class="value"
+                    id="statCameras">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         EVENTS
+         ========================= -->
+
+    <div id="eventList"></div>
+
+</main>
+
+
+<script>
+
+    const API_BASE = "";
+
+    let anomaliesOnly = false;
+
+
+    /* =========================================
+       LIVE CAMERA
+       ========================================= */
+
+    const liveCamera =
+        document.getElementById("liveCamera");
+
+    const cameraStatus =
+        document.getElementById("cameraStatus");
+
+    const cameraError =
+        document.getElementById("cameraError");
+
+
+    function updateLiveCamera() {
+
+        /*
+         * Add a timestamp so the browser does not
+         * use an old cached JPEG.
+         */
+        const timestamp = Date.now();
+
+        liveCamera.src =
+            `${API_BASE}/camera/frame?t=${timestamp}`;
+    }
+
+
+    liveCamera.onload = function () {
+
+        cameraStatus.textContent =
+            "● Camera online";
+
+        cameraStatus.style.color =
+            "var(--success)";
+
+        liveCamera.style.display =
+            "block";
+
+        cameraError.style.display =
+            "none";
+    };
+
+
+    liveCamera.onerror = function () {
+
+        cameraStatus.textContent =
+            "● Camera unavailable";
+
+        cameraStatus.style.color =
+            "var(--danger)";
+
+        liveCamera.style.display =
+            "none";
+
+        cameraError.style.display =
+            "block";
+    };
+
+
+    /*
+     * Request a new processed frame every 200 ms.
+     *
+     * That is approximately 5 frames per second
+     * in the browser.
+     */
+    updateLiveCamera();
+
+    setInterval(
+        updateLiveCamera,
+        200
+    );
+
+
+    /* =========================================
+       CAMERAS
+       ========================================= */
+
+    async function fetchCameras() {
+
+        try {
+
+            const res =
+                await fetch(
+                    `${API_BASE}/cameras`
+                );
+
+            const cameras =
+                await res.json();
+
+            const select =
+                document.getElementById(
+                    "cameraFilter"
+                );
+
+            const current =
+                select.value;
+
+            select.innerHTML =
+                '<option value="">All cameras</option>' +
+                cameras
+                    .map(
+                        c =>
+                            `<option value="${c}">
+                                ${c}
+                             </option>`
+                    )
+                    .join("");
+
+            select.value =
+                current;
+
+            document.getElementById(
+                "statCameras"
+            ).textContent =
+                cameras.length;
+
+        } catch (e) {
+
+            console.error(
+                "Could not fetch cameras:",
+                e
+            );
+
+        }
+    }
+
+
+    /* =========================================
+       EVENTS
+       ========================================= */
+
+    async function fetchEvents() {
+
+        const cameraId =
+            document.getElementById(
+                "cameraFilter"
+            ).value;
+
+        const params =
+            new URLSearchParams({
+                limit: "100"
+            });
+
+        if (cameraId) {
+
+            params.set(
+                "camera_id",
+                cameraId
+            );
+        }
+
+        if (anomaliesOnly) {
+
+            params.set(
+                "anomalies_only",
+                "true"
+            );
+        }
+
+        try {
+
+            const res =
+                await fetch(
+                    `${API_BASE}/events?${params}`
+                );
+
+            const events =
+                await res.json();
+
+            renderEvents(events);
+
+        } catch (e) {
+
+            document.getElementById(
+                "eventList"
+            ).innerHTML =
+
+                `<div class="empty">
+                    Could not reach CCTV AI Monitor backend.
+                    <br>
+                    Make sure the Spring Boot application
+                    is running on port 8000.
+                </div>`;
+        }
+    }
+
+
+    function renderEvents(events) {
+
+        const list =
+            document.getElementById("eventList");
+
+        /*
+         * Statistics
+         */
+        document.getElementById(
+            "statTotal"
+        ).textContent = events.length;
+
+        document.getElementById(
+            "statAnomalies"
+        ).textContent =
+            events.filter(
+                e => e.anomaly === true
+            ).length;
+
+
+        /*
+         * No events
+         */
+        if (events.length === 0) {
+
+            list.innerHTML =
+                `<div class="empty">
+                    No events yet.
+                </div>`;
+
+            return;
+        }
+
+
+        /*
+         * Render events
+         */
+        list.innerHTML =
+            events
+                .map(e => {
+
+                    /*
+                     * Event type
+                     */
+                    const objectType =
+                        e.objectType
+                            ? e.objectType
+                            : "Unknown";
+
+
+                    /*
+                     * Camera
+                     */
+                    const cameraId =
+                        e.cameraId
+                            ? e.cameraId
+                            : "Unknown camera";
+
+
+                    /*
+                     * Start time
+                     */
+                    const startTime =
+                        e.startTime
+                            ? new Date(
+                                e.startTime
+                            ).toLocaleString()
+                            : (
+                                e.timestamp
+                                    ? new Date(
+                                        e.timestamp
+                                    ).toLocaleString()
+                                    : "Unknown time"
+                            );
+
+
+                    /*
+                     * End time
+                     *
+                     * NULL means the object is
+                     * still being tracked.
+                     */
+                    const endTime =
+                        e.endTime
+                            ? new Date(
+                                e.endTime
+                            ).toLocaleString()
+                            : "Still active";
+
+
+                    /*
+                     * Duration
+                     */
+                    let durationText =
+                        "Active";
+
+                    if (e.startTime && e.endTime) {
+
+                        const start =
+                            new Date(
+                                e.startTime
+                            ).getTime();
+
+                        const end =
+                            new Date(
+                                e.endTime
+                            ).getTime();
+
+                        const durationSeconds =
+                            Math.max(
+                                0,
+                                Math.round(
+                                    (end - start) / 1000
+                                )
+                            );
+
+                        durationText =
+                            `${durationSeconds} second${
+                                durationSeconds === 1
+                                    ? ""
+                                    : "s"
+                            }`;
+                    }
+
+
+                    /*
+                     * Object ID
+                     */
+                    const objectId =
+                        e.objectId !== null &&
+                        e.objectId !== undefined
+                            ? `#${e.objectId}`
+                            : "";
+
+
+                    /*
+                     * Anomaly
+                     */
+                    const isAnomaly =
+                        e.anomaly === true;
+
+
+                    /*
+                     * Similarity
+                     */
+                    const similarityText =
+                        e.similarity !== null &&
+                        e.similarity !== undefined
+                            ? ` · similarity ${e.similarity}`
+                            : "";
+
+
+                    return `
+
+                            <div class="event ${
+                        isAnomaly
+                            ? "anomaly"
+                            : ""
+                    }">
+
+                                <span class="badge ${
+                        isAnomaly
+                            ? "anomaly"
+                            : ""
+                    }">
+
+                                    ${
+                        isAnomaly
+                            ? "UNUSUAL"
+                            : "usual"
+                    }
+
+                                </span>
+
+
+                                <div class="event-body">
+
+                                    <div class="event-meta">
+
+                                        <strong>
+                                            ${
+                        objectType
+                    }
+                                            ${
+                        objectId
+                    }
+                                        </strong>
+
+                                        ·
+
+                                        ${
+                        cameraId
+                    }
+
+                                        ·
+
+                                        ${
+                        startTime
+                    }
+
+                                    </div>
+
+
+                                    <div class="event-desc">
+
+                                        ${
+                        e.description
+                        || `${objectType} ${objectId} detected`
+                    }
+
+                                        <br>
+
+                                        <span style="
+                                            color: var(--muted);
+                                            font-size: 12px;
+                                        ">
+
+                                            Start:
+                                            ${
+                        startTime
+                    }
+
+                                            &nbsp; | &nbsp;
+
+                                            End:
+                                            ${
+                        endTime
+                    }
+
+                                            &nbsp; | &nbsp;
+
+                                            Duration:
+                                            ${
+                        durationText
+                    }
+
+                                            ${
+                        similarityText
+                    }
+
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        `;
+                })
+                .join("");
+    }
+
+
+    /* =========================================
+       BUTTONS
+       ========================================= */
+
+    document
+        .getElementById("refreshBtn")
+        .addEventListener(
+            "click",
+            () => {
+
+                fetchCameras();
+                fetchEvents();
+                updateLiveCamera();
+
+            }
+        );
+
+
+    document
+        .getElementById("cameraFilter")
+        .addEventListener(
+            "change",
+            fetchEvents
+        );
+
+
+    document
+        .getElementById("anomalyToggle")
+        .addEventListener(
+            "click",
+            (e) => {
+
+                anomaliesOnly =
+                    !anomaliesOnly;
+
+                e.target.textContent =
+                    anomaliesOnly
+                        ? "Show all"
+                        : "Anomalies only";
+
+                fetchEvents();
+
+            }
+        );
+
+
+    /* =========================================
+       INITIAL LOAD
+       ========================================= */
+
+    fetchCameras();
+
+    fetchEvents();
+
+
+    /*
+     * Refresh event/camera information every 5 seconds.
+     */
+    setInterval(
+        () => {
+
+            fetchCameras();
+            fetchEvents();
+
+        },
+        5000
+    );
+
+</script>
+
+</body>
+</html>

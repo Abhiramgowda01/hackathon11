@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="
+            http://maven.apache.org/POM/4.0.0
+            https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- =========================================================
+       SPRING BOOT
+       ========================================================= -->
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.4</version>
+    <relativePath/>
+  </parent>
+
+
+  <!-- =========================================================
+       PROJECT INFORMATION
+       ========================================================= -->
+
+  <groupId>com.cctvai</groupId>
+
+  <artifactId>cctv-ai-monitor</artifactId>
+
+  <version>1.0.0</version>
+
+  <packaging>jar</packaging>
+
+
+  <!-- =========================================================
+       JAVA VERSION
+       ========================================================= -->
+
+  <properties>
+    <java.version>21</java.version>
+  </properties>
+
+
+  <!-- =========================================================
+       DEPENDENCIES
+       ========================================================= -->
+
+  <dependencies>
+
+    <!-- =====================================================
+         SPRING WEB
+         ===================================================== -->
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+
+    <!-- =====================================================
+         SPRING DATA JPA
+         ===================================================== -->
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+
+    <!-- =====================================================
+         H2 DATABASE
+         ===================================================== -->
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+
+    <!-- =====================================================
+         OPENCV
+
+         Used for:
+         - laptop webcam
+         - RTSP CCTV
+         - MP4 video
+         - reading video frames
+         - writing processed video
+         ===================================================== -->
+
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>opencv-platform</artifactId>
+      <version>4.13.0-1.5.13</version>
+    </dependency>
+
+
+    <!-- =====================================================
+         OPENAI
+
+         Used for:
+         - overall CCTV video description
+         - visual understanding of sampled frames
+         ===================================================== -->
+
+    <dependency>
+      <groupId>com.openai</groupId>
+      <artifactId>openai-java</artifactId>
+      <version>4.65.0</version>
+    </dependency>
+
+
+    <!-- =====================================================
+         TESTING
+         ===================================================== -->
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+
+  <!-- =========================================================
+       BUILD
+       ========================================================= -->
+
+  <build>
+
+    <plugins>
+
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+</project>

@@ -1,0 +1,25 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Maven build files
+target/
+
+# Runtime database and uploaded videos
+data/
+
+# CCTV recordings
+recordings/
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# YOLO training model
+*.pt
+
+# Environment and secrets
+.env
+application-local.properties
