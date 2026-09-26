@@ -107,4 +107,9 @@ public class VideoAnalysisController {
                     );
         }
     }
+
+    @GetMapping("/progress")
+    public ResponseEntity<Map<String, Object>> getAnalysisProgress() {
+        return ResponseEntity.ok(videoAnalysisService.getProgress());
+    }
 }

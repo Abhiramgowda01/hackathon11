@@ -180,18 +180,23 @@ public class CameraProcessingService {
      */
 
     @PostConstruct
-    public void start() {
+    public synchronized void start() {
 
         if (running.get()) {
             return;
         }
 
+        if (!cameraSource.isOpened()) {
+            cameraSource.openCamera();
+        }
 
         running.set(true);
 
         cameraOnline = false;
 
         latestJpegFrame = null;
+
+        emptyFrameCount = 0;
 
 
         processingThread =
@@ -955,9 +960,13 @@ public class CameraProcessingService {
      * ============================================================
      */
 
-    public boolean isCameraOnline() {
+    public boolean isRunning() {
+        return running.get();
+    }
 
-        return cameraOnline;
+
+    public boolean isCameraOnline() {
+        return running.get() && cameraOnline;
     }
 
 
@@ -1096,7 +1105,11 @@ public class CameraProcessingService {
      */
 
     @PreDestroy
-    public void stop() {
+    public synchronized void stop() {
+
+        if (!running.get()) {
+            return;
+        }
 
         running.set(false);
 
@@ -1163,7 +1176,16 @@ public class CameraProcessingService {
                 Thread.currentThread()
                         .interrupt();
             }
+
+            processingThread = null;
         }
+
+
+        /*
+         * Release camera hardware capture so webcam light turns off.
+         */
+
+        cameraSource.stop();
 
 
         System.out.println(

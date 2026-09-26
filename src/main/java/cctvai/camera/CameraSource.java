@@ -32,10 +32,10 @@ public class CameraSource {
 
     /*
      * Open / re-open the camera source.
-     * Called both at startup and during reconnection.
+     * Called both at startup, on reconnection, and when turned on.
      * Returns true on success.
      */
-    private synchronized boolean openCamera() {
+    public synchronized boolean openCamera() {
 
         String cameraType = cameraConfig.getCameraType();
 

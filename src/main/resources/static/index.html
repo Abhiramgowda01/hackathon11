@@ -396,6 +396,103 @@
     }
 
     /* =====================================================
+       CAMERA TOGGLE
+       ===================================================== */
+
+    .camera-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .camera-toggle-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      transition: color .3s;
+    }
+
+    .camera-toggle-label.is-on {
+      color: var(--green);
+    }
+
+    .camera-toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .camera-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .camera-toggle .slider {
+      position: absolute;
+      inset: 0;
+      background: #2a323c;
+      border-radius: 24px;
+      transition: background .3s, box-shadow .3s;
+    }
+
+    .camera-toggle .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #667;
+      border-radius: 50%;
+      transition: transform .3s, background .3s, box-shadow .3s;
+    }
+
+    .camera-toggle input:checked + .slider {
+      background: var(--green-dark);
+      box-shadow: 0 0 12px rgba(79,190,130,.35);
+    }
+
+    .camera-toggle input:checked + .slider::before {
+      transform: translateX(20px);
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(79,190,130,.6);
+    }
+
+    .camera-toggle input:disabled + .slider {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .camera-overlay-off {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,19,24,.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 5;
+      backdrop-filter: blur(4px);
+      transition: opacity .4s;
+    }
+
+    .camera-overlay-off .off-icon {
+      font-size: 36px;
+      opacity: .5;
+    }
+
+    .camera-overlay-off .off-text {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* =====================================================
        OVERVIEW
        ===================================================== */
 
@@ -580,97 +677,7 @@
       font-size: 10px;
     }
 
-    /* =====================================================
-       ACTIVITY HISTORY
-       ===================================================== */
 
-    .activity-history-panel {
-      margin-top: 14px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .activity-history-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .history-clear {
-      border: 1px solid var(--border);
-      background: #20262d;
-      color: #9da7b0;
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 10px;
-    }
-
-    .history-clear:hover {
-      background: #293139;
-      color: white;
-    }
-
-    #activityHistoryList {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .history-item {
-      position: relative;
-      display: grid;
-      grid-template-columns: 4px 1fr auto;
-      gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .history-item:last-child {
-      border-bottom: 0;
-    }
-
-    .history-marker {
-      width: 3px;
-      height: 40px;
-      border-radius: 5px;
-      background: var(--green);
-    }
-
-    .history-item.is-anomaly .history-marker {
-      background: var(--red);
-    }
-
-    .history-object {
-      color: #edf1f4;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .history-action {
-      margin-top: 5px;
-      color: #d1d8de;
-      font-size: 13px;
-    }
-
-    .history-icon {
-      margin-right: 6px;
-    }
-
-    .history-meta {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 10px;
-    }
-
-    .history-time {
-      color: var(--muted);
-      font-size: 11px;
-      white-space: nowrap;
-    }
 
     .empty {
       padding: 32px;
@@ -823,6 +830,117 @@
       font-size: 10px;
     }
 
+    /* Video Analysis Progress Bar & Dashboard */
+    .analysis-progress-container {
+      margin-top: 14px;
+      background: #141a22;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      animation: fadeInProgress 0.3s ease;
+    }
+
+    @keyframes fadeInProgress {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .analysis-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .analysis-progress-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .analysis-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(34, 197, 94, 0.25);
+      border-top-color: #22c55e;
+      border-radius: 50%;
+      animation: spinProgress 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spinProgress {
+      to { transform: rotate(360deg); }
+    }
+
+    .analysis-progress-percent {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .analysis-progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: #1e2631;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .analysis-progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #16a34a, #22c55e, #4ade80);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+
+    .analysis-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--muted);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .analysis-live-detections {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .analysis-live-chip {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: popChip 0.25s ease;
+    }
+
+    @keyframes popChip {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
     .video-results {
       display: none;
       margin-top: 18px;
@@ -853,23 +971,65 @@
     }
 
     .video-description-card {
-      margin-top: 12px;
-      background: #1c2229;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
+      margin-top: 14px;
+      background: linear-gradient(135deg, #182230, #131a22);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 16px;
     }
 
     .video-description-title {
-      font-size: 10px;
+      font-size: 13px;
       font-weight: 700;
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
     }
 
     .video-description-text {
-      margin-top: 6px;
-      color: #c5cdd4;
-      font-size: 10px;
-      line-height: 1.5;
+      color: #e2e8f0;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .scenario-section {
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    .scenario-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .scenario-heading {
+      font-weight: 800;
+      color: #38bdf8;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .scenario-bullet {
+      padding-left: 8px;
+      margin: 4px 0;
+      color: #cbd5e1;
+      font-size: 11px;
+      border-left: 2px solid rgba(56, 189, 248, 0.3);
+      padding-top: 2px;
+      padding-bottom: 2px;
+    }
+
+    .scenario-text {
+      color: #e2e8f0;
+      font-size: 11px;
+      margin: 4px 0;
     }
 
     .timeline-wrapper {
@@ -1310,13 +1470,26 @@
 
           </div>
 
-          <div class="camera-live">
-            ● LIVE
+          <div class="camera-toggle-wrap">
+
+            <span class="camera-toggle-label is-on" id="cameraToggleLabel">ON</span>
+
+            <label class="camera-toggle" id="cameraToggle">
+              <input type="checkbox" id="cameraToggleInput" checked>
+              <span class="slider"></span>
+            </label>
+
           </div>
 
         </div>
 
         <div class="camera-wrap">
+
+          <!-- Overlay shown when camera is turned off -->
+          <div class="camera-overlay-off" id="cameraOverlayOff" style="display:none">
+            <div class="off-icon">📷</div>
+            <div class="off-text">Camera is turned off</div>
+          </div>
 
           <img
                   id="liveCamera"
@@ -1464,43 +1637,7 @@
     </section>
 
 
-    <!-- =====================================================
-         ACTIVITY HISTORY
-         ===================================================== -->
 
-    <section class="activity-history-panel">
-
-      <div class="activity-history-head">
-
-        <div>
-
-          <div class="section-kicker">
-            ACTIVITY HISTORY
-          </div>
-
-          <div class="section-title">
-            Recent Object Activity
-          </div>
-
-        </div>
-
-        <button
-                id="clearActivityHistory"
-                class="history-clear">
-          Clear
-        </button>
-
-      </div>
-
-      <div id="activityHistoryList">
-
-        <div class="empty">
-          Activity history will appear here.
-        </div>
-
-      </div>
-
-    </section>
 
 
     <!-- =====================================================
@@ -1639,6 +1776,29 @@
               class="video-status"
               id="videoStatus">
         Waiting for video.
+      </div>
+
+      <!-- Real-Time Analysis Progress Dashboard -->
+      <div class="analysis-progress-container" id="analysisProgressContainer" style="display: none;">
+        <div class="analysis-progress-header">
+          <div class="analysis-progress-label">
+            <span class="analysis-spinner" id="analysisSpinner"></span>
+            <span id="analysisProgressText">Initializing video analyzer...</span>
+          </div>
+          <div class="analysis-progress-percent" id="analysisProgressPercent">0%</div>
+        </div>
+
+        <div class="analysis-progress-bar-track">
+          <div class="analysis-progress-bar-fill" id="analysisProgressBarFill" style="width: 0%;"></div>
+        </div>
+
+        <div class="analysis-progress-meta">
+          <span id="analysisProgressFrames">0 / 0 frames</span>
+          <span id="analysisProgressTime">00:00:00 / 00:00:00</span>
+          <span id="analysisProgressEvents">0 events found</span>
+        </div>
+
+        <div class="analysis-live-detections" id="analysisLiveDetections"></div>
       </div>
 
 
@@ -1983,6 +2143,133 @@
 
 
   /* =====================================================
+     CAMERA TOGGLE
+     ===================================================== */
+
+  const cameraToggleInput =
+          document.getElementById("cameraToggleInput");
+
+  const cameraToggleLabel =
+          document.getElementById("cameraToggleLabel");
+
+  const cameraOverlayOff =
+          document.getElementById("cameraOverlayOff");
+
+  let cameraToggleBusy = false;
+
+
+  /**
+   * Sync the toggle UI with the actual backend state.
+   */
+  function applyCameraState(running) {
+
+    cameraToggleInput.checked = running;
+
+    cameraToggleLabel.textContent =
+            running ? "ON" : "OFF";
+
+    if (running) {
+      cameraToggleLabel.classList.add("is-on");
+    } else {
+      cameraToggleLabel.classList.remove("is-on");
+    }
+
+    cameraOverlayOff.style.display =
+            running ? "none" : "flex";
+  }
+
+
+  /**
+   * Called when user clicks the toggle.
+   */
+  cameraToggleInput.addEventListener(
+          "change",
+          async function () {
+
+            if (cameraToggleBusy) {
+              return;
+            }
+
+            cameraToggleBusy = true;
+
+            cameraToggleInput.disabled = true;
+
+            cameraToggleLabel.textContent = "...";
+
+            try {
+
+              const resp =
+                      await fetch(
+                              `${API_BASE}/camera/toggle`,
+                              { method: "POST" }
+                      );
+
+              if (!resp.ok) {
+                throw new Error(
+                        `Toggle HTTP ${resp.status}`
+                );
+              }
+
+              const state =
+                      await resp.json();
+
+              applyCameraState(state.running);
+
+            } catch (err) {
+
+              console.error(
+                      "Camera toggle error:",
+                      err
+              );
+
+              /* Revert toggle visually */
+              cameraToggleInput.checked =
+                      !cameraToggleInput.checked;
+
+              applyCameraState(
+                      cameraToggleInput.checked
+              );
+
+            } finally {
+
+              cameraToggleInput.disabled = false;
+              cameraToggleBusy = false;
+            }
+          }
+  );
+
+
+  /**
+   * On page load, fetch the real state from the backend
+   * so the toggle matches reality.
+   */
+  (async function syncCameraState() {
+
+    try {
+
+      const resp =
+              await fetch(
+                      `${API_BASE}/camera/status`
+              );
+
+      if (resp.ok) {
+
+        const state =
+                await resp.json();
+
+        applyCameraState(
+                state.running
+        );
+      }
+
+    } catch (e) {
+      /* ignore — will default to ON */
+    }
+
+  })();
+
+
+  /* =====================================================
      LIVE OBJECT ACTIVITY
      ===================================================== */
 
@@ -1992,11 +2279,7 @@
   const activityStates =
           new Map();
 
-  const activityHistory =
-          [];
 
-  const activityHistoryKeys =
-          new Set();
 
 
   async function fetchLiveActivity() {
@@ -2130,277 +2413,7 @@
   }
 
 
-  /* =====================================================
-     ADD HISTORY
-     ===================================================== */
 
-  function addActivityHistory(
-          activity,
-          activityTime
-  ) {
-
-    const objectType =
-            String(
-                    activity.objectType ||
-                    "object"
-            );
-
-
-    const objectId =
-            activity.objectId ??
-            "";
-
-
-    const activityName =
-            String(
-                    activity.activity ||
-                    "Detected"
-            );
-
-
-    const anomaly =
-            activity.anomaly === true;
-
-
-    /*
-       Include the time/state so that
-       the same person can appear again
-       when their activity changes.
-    */
-
-    const key =
-            `${objectType}-${objectId}-${activityName}-${activityTime}-${anomaly}`;
-
-
-    if (
-            activityHistoryKeys.has(key)
-    ) {
-
-      return;
-
-    }
-
-
-    activityHistoryKeys.add(
-            key
-    );
-
-
-    activityHistory.unshift({
-
-      objectType,
-
-      objectId,
-
-      activityName,
-
-      activityTime,
-
-      anomaly,
-
-      confidence:
-              Number(
-                      activity.confidence || 0
-              ) * 100,
-
-      stationarySeconds:
-              Number(
-                      activity.stationarySeconds || 0
-              )
-
-    });
-
-
-    /*
-       Keep latest 50.
-    */
-
-    if (
-            activityHistory.length > 50
-    ) {
-
-      const removed =
-              activityHistory.pop();
-
-
-      if (removed) {
-
-        const removedKey =
-                `${removed.objectType}-${removed.objectId}-${removed.activityName}-${removed.activityTime}-${removed.anomaly}`;
-
-        activityHistoryKeys.delete(
-                removedKey
-        );
-
-      }
-
-    }
-
-
-    renderActivityHistory();
-  }
-
-
-  /* =====================================================
-     ACTIVITY HISTORY UI
-     ===================================================== */
-
-  function renderActivityHistory() {
-
-    const list =
-            document.getElementById(
-                    "activityHistoryList"
-            );
-
-
-    if (!list) {
-      return;
-    }
-
-
-    if (
-            activityHistory.length === 0
-    ) {
-
-      list.innerHTML = `
-            <div class="empty">
-                Activity history will appear here.
-            </div>
-        `;
-
-      return;
-    }
-
-
-    list.innerHTML =
-            activityHistory
-                    .map(item => {
-
-                      let icon = "👁️";
-
-                      const action =
-                              item.activityName
-                                      .toLowerCase();
-
-
-                      if (
-                              action.includes("walk")
-                      ) {
-                        icon = "🚶";
-                      }
-
-                      else if (
-                              action.includes("run")
-                      ) {
-                        icon = "🏃";
-                      }
-
-                      else if (
-                              action.includes("sit")
-                      ) {
-                        icon = "🪑";
-                      }
-
-                      else if (
-                              action.includes("stand")
-                      ) {
-                        icon = "🧍";
-                      }
-
-                      else if (
-                              action.includes("fall")
-                      ) {
-                        icon = "⚠️";
-                      }
-
-
-                      return `
-
-                    <article
-                        class="history-item ${
-                              item.anomaly
-                                      ? "is-anomaly"
-                                      : ""
-                      }">
-
-                        <div
-                            class="history-marker">
-                        </div>
-
-                        <div>
-
-                            <div
-                                class="history-object">
-
-                                ${escapeHtml(
-                              item.objectType
-                      )}
-
-                                #${escapeHtml(
-                              String(
-                                      item.objectId
-                              )
-                      )}
-
-                            </div>
-
-
-                            <div
-                                class="history-action">
-
-                                <span
-                                    class="history-icon">
-                                    ${icon}
-                                </span>
-
-                                ${escapeHtml(
-                              item.activityName
-                      )}
-
-                            </div>
-
-
-                            <div
-                                class="history-meta">
-
-                                Confidence:
-                                ${item.confidence.toFixed(1)}%
-
-                                ·
-
-                                Stationary:
-                                ${item.stationarySeconds}s
-
-                                ·
-
-                                ${
-                              item.anomaly
-                                      ? "⚠ ANOMALY"
-                                      : "✓ NORMAL"
-                      }
-
-                            </div>
-
-                        </div>
-
-
-                        <div
-                            class="history-time">
-
-                            ${escapeHtml(
-                              item.activityTime
-                      )}
-
-                        </div>
-
-                    </article>
-
-                `;
-
-                    })
-                    .join("");
-
-  }
 
 
   /* =====================================================
@@ -2501,14 +2514,7 @@
                               );
 
 
-                      /*
-                         Add to history.
-                      */
 
-                      addActivityHistory(
-                              activity,
-                              activityTime
-                      );
 
 
                       let icon = "👁️";
@@ -2667,27 +2673,7 @@
   );
 
 
-  /* =====================================================
-     CLEAR HISTORY
-     ===================================================== */
 
-  document
-          .getElementById(
-                  "clearActivityHistory"
-          )
-          .addEventListener(
-                  "click",
-                  function () {
-
-                    activityHistory.length =
-                            0;
-
-                    activityHistoryKeys.clear();
-
-                    renderActivityHistory();
-
-                  }
-          );
 
 
   /* =====================================================
@@ -3159,29 +3145,76 @@
             const file =
                     videoFile.files[0];
 
-
             if (!file) {
               return;
             }
 
+            analyseButton.disabled = true;
 
-            analyseButton.disabled =
-                    true;
+            const progressContainer = document.getElementById("analysisProgressContainer");
+            const spinner = document.getElementById("analysisSpinner");
+            const progressText = document.getElementById("analysisProgressText");
+            const progressPercent = document.getElementById("analysisProgressPercent");
+            const progressBarFill = document.getElementById("analysisProgressBarFill");
+            const progressFrames = document.getElementById("analysisProgressFrames");
+            const progressTime = document.getElementById("analysisProgressTime");
+            const progressEvents = document.getElementById("analysisProgressEvents");
+            const liveDetections = document.getElementById("analysisLiveDetections");
 
+            // Reset progress UI
+            if (progressContainer) progressContainer.style.display = "block";
+            if (spinner) spinner.style.display = "inline-block";
+            if (progressPercent) {
+              progressPercent.textContent = "5%";
+              progressPercent.style.color = "#22c55e";
+            }
+            if (progressBarFill) {
+              progressBarFill.style.width = "5%";
+              progressBarFill.style.background = "linear-gradient(90deg, #16a34a, #22c55e, #4ade80)";
+            }
+            if (progressText) progressText.textContent = "Uploading video to server...";
+            if (progressFrames) progressFrames.textContent = "Processing upload...";
+            if (progressTime) progressTime.textContent = "--:-- / --:--";
+            if (progressEvents) progressEvents.textContent = "0 events found";
+            if (liveDetections) liveDetections.innerHTML = "";
 
-            videoStatus.textContent =
-                    "Uploading and analyzing video...";
+            videoStatus.textContent = "Analysis in progress...";
+            videoResults.style.display = "none";
 
+            const formData = new FormData();
+            formData.append("file", file);
 
-            const formData =
-                    new FormData();
-
-
-            formData.append(
-                    "file",
-                    file
-            );
-
+            // Start polling progress every 350ms
+            let progressPoller = setInterval(async () => {
+              try {
+                const pResp = await fetch(`${API_BASE}/video/progress?t=${Date.now()}`);
+                if (pResp.ok) {
+                  const p = await pResp.json();
+                  if (p.status === "analyzing" || p.status === "uploading" || p.status === "generating_description") {
+                    const pct = Math.max(5, Math.min(98, p.percent || 0));
+                    if (progressPercent) progressPercent.textContent = `${pct}%`;
+                    if (progressBarFill) progressBarFill.style.width = `${pct}%`;
+                    if (progressText) progressText.textContent = p.message || "Analyzing video frames...";
+                    if (progressFrames && p.totalFrames > 0) {
+                      progressFrames.textContent = `${p.currentFrame || 0} / ${p.totalFrames} frames`;
+                    }
+                    if (progressTime && p.totalTime) {
+                      progressTime.textContent = `${p.currentTime || "00:00:00"} / ${p.totalTime}`;
+                    }
+                    if (progressEvents) {
+                      progressEvents.textContent = `${p.eventsCount || 0} event(s) found`;
+                    }
+                    if (liveDetections && Array.isArray(p.detectedObjects) && p.detectedObjects.length > 0) {
+                      liveDetections.innerHTML = p.detectedObjects.map(obj =>
+                        `<span class="analysis-live-chip">${escapeHtml(obj)}</span>`
+                      ).join("");
+                    }
+                  }
+                }
+              } catch (pollErr) {
+                // Ignore transient network hiccups during polling
+              }
+            }, 350);
 
             try {
 
@@ -3194,25 +3227,26 @@
                               }
                       );
 
+              clearInterval(progressPoller);
 
               const result =
                       await response.json();
 
-
               if (!response.ok) {
-
                 throw new Error(
                         result.error ||
                         "Video analysis failed."
                 );
-
               }
 
+              if (progressPercent) progressPercent.textContent = "100%";
+              if (progressBarFill) progressBarFill.style.width = "100%";
+              if (progressText) progressText.textContent = "✓ Analysis completed successfully!";
+              if (spinner) spinner.style.display = "none";
 
               displayVideoResult(
                       result
               );
-
 
               videoStatus.textContent =
                       "✓ Video analysis completed.";
@@ -3220,20 +3254,34 @@
               videoResults.style.display =
                       "block";
 
+              // Smoothly scroll down to see the result
+              videoResults.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
             } catch (error) {
+
+              clearInterval(progressPoller);
 
               console.error(
                       "Video error:",
                       error
               );
 
+              if (spinner) spinner.style.display = "none";
+              if (progressPercent) {
+                progressPercent.textContent = "Failed";
+                progressPercent.style.color = "#f87171";
+              }
+              if (progressBarFill) {
+                progressBarFill.style.background = "#ef4444";
+              }
+              if (progressText) progressText.textContent = "✗ Analysis failed";
 
               videoStatus.textContent =
                       "✗ " + error.message;
 
-
             } finally {
+
+              clearInterval(progressPoller);
 
               analyseButton.disabled =
                       false;
@@ -3336,16 +3384,29 @@
             );
 
 
-    if (
-            result.video_description
-    ) {
+    if (description && descriptionCard) {
+      const rawDesc = result.video_description || "No events or description generated for this video.";
+      const formatted = rawDesc
+        .split("\n\n")
+        .map(section => {
+          const lines = section.trim().split("\n");
+          return `<div class="scenario-section">${lines.map(line => {
+            const trimmed = line.trim();
+            const escaped = escapeHtml(trimmed);
+            if (trimmed.startsWith("🎬") || trimmed.startsWith("⏱️") || trimmed.startsWith("📊") || trimmed.startsWith("📹")) {
+              return `<div class="scenario-heading">${escaped}</div>`;
+            } else if (trimmed.startsWith("•")) {
+              return `<div class="scenario-bullet">${escaped}</div>`;
+            } else {
+              return `<p class="scenario-text">${escaped}</p>`;
+            }
+          }).join("")}</div>`;
+        })
+        .join("");
 
-      description.textContent =
-              result.video_description;
-
+      description.innerHTML = formatted;
       descriptionCard.style.display =
               "block";
-
     }
 
 

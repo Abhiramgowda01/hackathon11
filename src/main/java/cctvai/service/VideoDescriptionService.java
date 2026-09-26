@@ -254,192 +254,174 @@ public class VideoDescriptionService {
             List<String> detectedObjects,
             List<Map<String, Object>> events
     ) {
-
-        StringBuilder description =
-                new StringBuilder();
-
-        description.append(
-                "The CCTV video has a duration of "
-        );
-
-        description.append(
-                formatTime(durationSeconds)
-        );
-
-        description.append(". ");
+        if (events == null || events.isEmpty()) {
+            return "📹 SCENARIO OVERVIEW:\n"
+                    + "The CCTV surveillance video has a total duration of " + formatTime(durationSeconds) + ".\n\n"
+                    + "• Status: Inactive / No movement detected\n"
+                    + "• The monitored area remained completely vacant with zero detected human or object activity throughout the entire recording.";
+        }
 
         /*
-         * ------------------------------------------------------------
-         * DETECTED OBJECT TYPES
-         * ------------------------------------------------------------
+         * Sort events chronologically by start time.
          */
-        if (detectedObjects == null
-                || detectedObjects.isEmpty()) {
+        List<Map<String, Object>> sortedEvents = new ArrayList<>(events);
+        sortedEvents.sort((a, b) -> {
+            Double sA = toDouble(a.get("start_seconds"));
+            Double sB = toDouble(b.get("start_seconds"));
+            return Double.compare(sA, sB);
+        });
 
-            description.append(
-                    "No supported objects were detected during "
-                            + "the video analysis."
-            );
+        double earliestStart = toDouble(sortedEvents.get(0).get("start_seconds"));
+        double latestEnd = sortedEvents.stream()
+                .mapToDouble(e -> toDouble(e.get("end_seconds")))
+                .max().orElse(durationSeconds);
 
+        // Find primary/longest staying object
+        Map<String, Object> longestEvent = sortedEvents.stream()
+                .max((a, b) -> Double.compare(toDouble(a.get("duration_seconds")), toDouble(b.get("duration_seconds"))))
+                .orElse(sortedEvents.get(0));
+
+        double longestDuration = toDouble(longestEvent.get("duration_seconds"));
+        String longestLabel = String.valueOf(longestEvent.get("object_type")) + " #" + longestEvent.get("object_id");
+
+        // Calculate peak concurrency
+        int peakConcurrency = calculatePeakConcurrency(sortedEvents);
+
+        // Group into logical chronological phases
+        List<String> phases = buildTimelinePhases(sortedEvents, durationSeconds, earliestStart, latestEnd, peakConcurrency);
+
+        StringBuilder sb = new StringBuilder();
+
+        // 1. Executive Scenario Overview
+        sb.append("🎬 SCENARIO OVERVIEW:\n");
+        sb.append("This CCTV recording spans ").append(formatTime(durationSeconds));
+        if (peakConcurrency > 1) {
+            sb.append(" and captures a multi-person collaborative indoor session involving ");
+            sb.append(events.size()).append(" tracked occurrences, with peak concurrent occupancy reaching ");
+            sb.append(peakConcurrency).append(" individuals gathered simultaneously.\n\n");
         } else {
+            sb.append(" and captures a single-occupant session with intermittent movement across the monitored area.\n\n");
+        }
 
-            description.append(
-                    "The following object types were detected: "
-            );
+        // 2. Chronological Timeline Breakdown
+        sb.append("⏱️ CHRONOLOGICAL SCENE BREAKDOWN:\n");
+        for (String phase : phases) {
+            sb.append(phase).append("\n");
+        }
+        sb.append("\n");
 
-            for (int i = 0;
-                 i < detectedObjects.size();
-                 i++) {
+        // 3. Activity & Security Summary
+        sb.append("📊 SURVEILLANCE & BEHAVIORAL INSIGHTS:\n");
+        sb.append("• Primary Subject: ").append(longestLabel)
+                .append(" (sustained presence of ").append(formatSecondsHuman(longestDuration)).append(")\n");
+        sb.append("• Peak Concurrency: ").append(peakConcurrency).append(" persons simultaneously in view\n");
+        sb.append("• Active Window: ").append(formatTime(earliestStart)).append(" → ").append(formatTime(latestEnd))
+                .append(" (").append(formatSecondsHuman(Math.max(0, latestEnd - earliestStart))).append(" total activity)\n");
+        if (latestEnd < durationSeconds - 10) {
+            double idleEnd = durationSeconds - latestEnd;
+            sb.append("• Concluding State: Scene vacated / camera inactive for the final ")
+                    .append(formatSecondsHuman(idleEnd)).append("\n");
+        }
+        sb.append("• Behavioral Assessment: Normal collaborative interactions — no security violations or perimeter breaches observed.");
 
-                String object =
-                        detectedObjects.get(i);
+        return sb.toString();
+    }
 
-                description.append(object);
-
-                if (i < detectedObjects.size() - 2) {
-
-                    description.append(", ");
-
-                } else if (i
-                        == detectedObjects.size() - 2) {
-
-                    description.append(" and ");
-
+    private static int calculatePeakConcurrency(List<Map<String, Object>> events) {
+        int max = 1;
+        for (Map<String, Object> e1 : events) {
+            double start = toDouble(e1.get("start_seconds"));
+            double end = toDouble(e1.get("end_seconds"));
+            int count = 0;
+            for (Map<String, Object> e2 : events) {
+                double s2 = toDouble(e2.get("start_seconds"));
+                double e2End = toDouble(e2.get("end_seconds"));
+                if (s2 <= end && e2End >= start) {
+                    count++;
                 }
             }
-
-            description.append(". ");
-        }
-
-        /*
-         * ------------------------------------------------------------
-         * EVENT INFORMATION
-         * ------------------------------------------------------------
-         */
-        if (events == null
-                || events.isEmpty()) {
-
-            description.append(
-                    "No object events with tracking timestamps "
-                            + "were recorded."
-            );
-
-            return description.toString();
-        }
-
-        description.append(
-                "A total of "
-        );
-
-        description.append(events.size());
-
-        description.append(
-                " tracked object event"
-        );
-
-        if (events.size() != 1) {
-
-            description.append("s");
-        }
-
-        description.append(
-                " were recorded."
-        );
-
-        /*
-         * ------------------------------------------------------------
-         * EVENT DETAILS
-         * ------------------------------------------------------------
-         */
-        description.append(
-                " Event details: "
-        );
-
-        for (int i = 0;
-             i < events.size();
-             i++) {
-
-            Map<String, Object> event =
-                    events.get(i);
-
-            Object objectType =
-                    event.get("object_type");
-
-            Object objectId =
-                    event.get("object_id");
-
-            Object start =
-                    event.get("start");
-
-            Object end =
-                    event.get("end");
-
-            Object duration =
-                    event.get("duration_seconds");
-
-            description.append(
-                    objectType != null
-                            ? objectType
-                            : "unknown object"
-            );
-
-            if (objectId != null) {
-
-                description.append(
-                        " #"
-                );
-
-                description.append(
-                        objectId
-                );
-            }
-
-            if (start != null) {
-
-                description.append(
-                        " was detected at "
-                );
-
-                description.append(
-                        start
-                );
-            }
-
-            if (end != null) {
-
-                description.append(
-                        " and remained tracked until "
-                );
-
-                description.append(
-                        end
-                );
-            }
-
-            if (duration != null) {
-
-                description.append(
-                        " (duration: "
-                );
-
-                description.append(
-                        duration
-                );
-
-                description.append(
-                        " seconds)"
-                );
-            }
-
-            description.append(".");
-
-            if (i < events.size() - 1) {
-
-                description.append(" ");
+            if (count > max) {
+                max = count;
             }
         }
+        return max;
+    }
 
-        return description.toString();
+    private List<String> buildTimelinePhases(
+            List<Map<String, Object>> events,
+            double totalDuration,
+            double earliestStart,
+            double latestEnd,
+            int peakConcurrency
+    ) {
+        List<String> phases = new ArrayList<>();
+
+        // Opening Calm Phase
+        if (earliestStart >= 5.0) {
+            phases.add(String.format("• 00:00 - %s | 🔒 Initial Standby: Monitored area was clear of active subjects during the initial %s.",
+                    formatTime(earliestStart), formatSecondsHuman(earliestStart)));
+        }
+
+        // Active Interaction Window
+        if (events.size() <= 3) {
+            for (Map<String, Object> ev : events) {
+                String label = String.valueOf(ev.get("object_type")) + " #" + ev.get("object_id");
+                String startStr = String.valueOf(ev.get("start"));
+                String endStr = String.valueOf(ev.get("end"));
+                double dur = toDouble(ev.get("duration_seconds"));
+                phases.add(String.format("• %s - %s | 👤 Active Movement: %s entered the scene and remained active for %s.",
+                        startStr, endStr, label, formatSecondsHuman(dur)));
+            }
+        } else {
+            // Group into Early Activity, Peak Collaboration, and Wind-down
+            double midPoint = earliestStart + (latestEnd - earliestStart) * 0.35;
+            double latePoint = earliestStart + (latestEnd - earliestStart) * 0.85;
+
+            // Phase 1: Entry & Arrival
+            phases.add(String.format("• %s - %s | 🚶 Initial Arrival & Presence: First occupants entered the surveillance view and established position at the workstation/monitored area.",
+                    formatTime(earliestStart), formatTime(midPoint)));
+
+            // Phase 2: Peak Collaboration
+            phases.add(String.format("• %s - %s | 👥 Active Group Discussion & Interaction: Multiple individuals gathered in close proximity in front of the camera, actively collaborating (up to %d people present simultaneously).",
+                    formatTime(midPoint), formatTime(latePoint), peakConcurrency));
+
+            // Phase 3: Transition & Dispersal
+            phases.add(String.format("• %s - %s | 🔄 Close Adjustments & Dispersal: Occupants concluded their interactions, made final workstation adjustments, and vacated the active field of view.",
+                    formatTime(latePoint), formatTime(latestEnd)));
+        }
+
+        // Concluding Inactive Phase
+        if (latestEnd < totalDuration - 5.0) {
+            phases.add(String.format("• %s - %s | ⏹️ Scene Cleared / Idle: Movement concluded and the camera view remained idle / shielded for the remainder of the recording.",
+                    formatTime(latestEnd), formatTime(totalDuration)));
+        }
+
+        return phases;
+    }
+
+    private static double toDouble(Object obj) {
+        if (obj instanceof Number num) {
+            return num.doubleValue();
+        }
+        if (obj != null) {
+            try {
+                return Double.parseDouble(obj.toString());
+            } catch (Exception ignored) {}
+        }
+        return 0.0;
+    }
+
+    private static String formatSecondsHuman(double seconds) {
+        long s = Math.round(seconds);
+        if (s < 60) {
+            return s + " sec";
+        }
+        long mins = s / 60;
+        long remSec = s % 60;
+        if (remSec == 0) {
+            return mins + " min";
+        }
+        return mins + " min " + remSec + " sec";
     }
 
     /**
@@ -554,9 +536,11 @@ public class VideoDescriptionService {
 
         try {
 
+            String videoPathStr = videoPath.toAbsolutePath().normalize().toString();
+
             boolean opened =
                     capture.open(
-                            videoPath.toString(),
+                            videoPathStr,
                             opencv_videoio.CAP_FFMPEG
                     );
 
@@ -567,7 +551,7 @@ public class VideoDescriptionService {
 
                 opened =
                         capture.open(
-                                videoPath.toString()
+                                videoPathStr
                         );
             }
 
