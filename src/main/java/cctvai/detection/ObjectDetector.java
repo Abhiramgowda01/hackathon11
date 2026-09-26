@@ -12,11 +12,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * YOLOv8 object detector.
- *
- * Detects people and animals from CCTV frames.
- */
 @Component
 public class ObjectDetector {
 
@@ -28,9 +23,6 @@ public class ObjectDetector {
     private static final float CONFIDENCE_THRESHOLD = 0.40f;
     private static final float NMS_THRESHOLD = 0.45f;
 
-    /*
-     * YOLOv8 COCO class names.
-     */
     private static final String[] CLASS_NAMES = {
             "person",
             "bicycle",
@@ -113,21 +105,19 @@ public class ObjectDetector {
 //            "toothbrush"
     };
 
-    /*
-     * Objects relevant to the CCTV system.
-     */
+
     private static final List<String> TARGET_CLASSES = List.of(
-            "person",
-            "bird",
-            "cat",
-            "dog",
-            "horse",
-            "sheep",
-            "cow",
-            "elephant",
-            "bear",
-            "zebra",
-            "giraffe"
+            "person"
+            //"bird",
+            //"cat",
+            //"dog",
+            //"horse",
+            //"sheep",
+            //"cow",
+            //"elephant",
+            //"bear",
+            //"zebra",
+            //"giraffe"
     );
 
     private final Net net;
@@ -145,12 +135,6 @@ public class ObjectDetector {
                     "Could not load YOLO model: " + MODEL_PATH
             );
         }
-
-        /*
-         * Use CPU for now.
-         *
-         * Later we can add GPU acceleration if available.
-         */
         net.setPreferableBackend(opencv_dnn.DNN_BACKEND_OPENCV);
         net.setPreferableTarget(opencv_dnn.DNN_TARGET_CPU);
 
@@ -158,9 +142,7 @@ public class ObjectDetector {
         System.out.println("==========================================");
     }
 
-    /**
-     * Detect people and animals in one CCTV frame.
-     */
+
     public synchronized List<Detection> detect(Mat frame) {
 
         if (frame == null || frame.empty()) {
@@ -170,9 +152,7 @@ public class ObjectDetector {
         int originalWidth = frame.cols();
         int originalHeight = frame.rows();
 
-        /*
-         * Convert image into YOLO input blob.
-         */
+
         Mat blob = opencv_dnn.blobFromImage(
                 frame,
                 1.0 / 255.0,
@@ -190,9 +170,6 @@ public class ObjectDetector {
 
         net.setInput(blob);
 
-        /*
-         * Run YOLO.
-         */
         MatVector outputs = new MatVector();
 
         net.forward(
@@ -221,16 +198,6 @@ public class ObjectDetector {
         return detections;
     }
 
-    /**
-     * Parse YOLOv8 output.
-     *
-     * YOLOv8 normally produces:
-     *
-     * [1, 84, 8400]
-     *
-     * 4 values = box
-     * 80 values = COCO classes
-     */
     private List<Detection> parseOutput(
             Mat output,
             int originalWidth,
@@ -266,9 +233,7 @@ public class ObjectDetector {
             float bestConfidence = 0.0f;
             int bestClass = -1;
 
-            /*
-             * Find the class with the highest confidence.
-             */
+
             for (int classIndex = 4; classIndex < channels; classIndex++) {
 
                 float confidence =
@@ -290,9 +255,6 @@ public class ObjectDetector {
 
             String label = CLASS_NAMES[bestClass];
 
-            /*
-             * Ignore objects that are not people or animals.
-             */
             if (!TARGET_CLASSES.contains(label)) {
                 continue;
             }
@@ -301,9 +263,7 @@ public class ObjectDetector {
                 continue;
             }
 
-            /*
-             * Convert center coordinates to top-left coordinates.
-             */
+
             int x = Math.round(
                     (centerX - width / 2.0f) * xScale
             );

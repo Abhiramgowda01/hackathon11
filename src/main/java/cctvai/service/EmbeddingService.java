@@ -14,7 +14,6 @@ import java.util.Locale;
 
 /**
  * Converts a description into a vector so it can be compared for similarity.
- *
  * Uses OpenAI's embeddings API if a key is configured (accurate, semantic).
  * Falls back to a simple hashing-trick bag-of-words vector (offline, no
  * dependencies) so the whole pipeline runs without any API key — it is

@@ -7,72 +7,20 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
-/**
- * ============================================================
- * CCTV OBJECT TRACKER
- * ============================================================
- *
- * Gives detected people/animals/objects a persistent ID.
- *
- * Example:
- *
- * Person #1
- * Person #2
- * Dog #3
- *
- * The ID remains the same while the object continues
- * to be detected in nearby positions.
- * ============================================================
- */
 @Component
 public class ObjectTracker {
 
-    /*
-     * If an object is not detected for this many frames,
-     * the tracker removes it.
-     *
-     * Example:
-     * 15 missed frames -> object is removed.
-     */
     private static final int MAX_MISSED_FRAMES = 15;
 
-    /*
-     * Minimum IoU required to consider two boxes
-     * as the same object.
-     */
     private static final double IOU_THRESHOLD = 0.30;
 
-    /*
-     * Next tracking ID.
-     */
     private int nextId = 1;
 
-    /*
-     * Objects currently being tracked.
-     */
     private final List<TrackedObject> trackedObjects =
             new ArrayList<>();
 
 
-    /**
-     * ========================================================
-     * UPDATE TRACKER
-     * ========================================================
-     *
-     * Receives the detections from YOLO for the current frame.
-     *
-     * It tries to match each detection with an existing object.
-     *
-     * If a match is found:
-     *      keep the same ID
-     *
-     * If no match is found:
-     *      create a new ID
-     *
-     * @param detections detections from ObjectDetector
-     * @return currently tracked objects
-     */
+
     public synchronized List<TrackedObject> update(
             List<Detection> detections
     ) {
@@ -86,8 +34,7 @@ public class ObjectTracker {
 
 
         /*
-         * Try to match every new detection
-         * with an existing tracked object.
+          Try to match every new detection with an existing tracked object.
          */
         for (Detection detection : detections) {
 
@@ -96,27 +43,18 @@ public class ObjectTracker {
 
 
             /*
-             * Compare this detection with every
-             * currently tracked object.
+             * Compare this detection with every currently tracked object.
              */
             for (TrackedObject existing : trackedObjects) {
 
                 /*
-                 * This object has already been matched
-                 * with another detection in this frame.
+                 * Already matched in this frame.
                  */
                 if (existing.isMatched()) {
                     continue;
                 }
-
-
                 /*
                  * Do not match different object types.
-                 *
-                 * Example:
-                 *
-                 * person != dog
-                 * car != person
                  */
                 if (!existing.getLabel()
                         .equalsIgnoreCase(
@@ -128,8 +66,7 @@ public class ObjectTracker {
 
 
                 /*
-                 * Calculate overlap between the
-                 * existing box and new detection box.
+                 * Calculate overlap between the existing box and new detection box.
                  */
                 double iou = calculateIoU(
                         existing.getBoundingBox(),
@@ -149,9 +86,7 @@ public class ObjectTracker {
 
 
             /*
-             * ====================================================
              * EXISTING OBJECT FOUND
-             * ====================================================
              */
             if (bestMatch != null
                     && bestIoU >= IOU_THRESHOLD) {
@@ -164,9 +99,7 @@ public class ObjectTracker {
             } else {
 
                 /*
-                 * =================================================
                  * NEW OBJECT FOUND
-                 * =================================================
                  */
                 TrackedObject newObject =
                         new TrackedObject(
@@ -184,12 +117,7 @@ public class ObjectTracker {
 
 
         /*
-         * ========================================================
          * HANDLE MISSED OBJECTS
-         * ========================================================
-         *
-         * If an object was not detected in this frame,
-         * increase its missed-frame counter.
          */
         for (TrackedObject object : trackedObjects) {
 
@@ -201,9 +129,7 @@ public class ObjectTracker {
 
 
         /*
-         * ========================================================
          * REMOVE DISAPPEARED OBJECTS
-         * ========================================================
          */
         Iterator<TrackedObject> iterator =
                 trackedObjects.iterator();
@@ -223,33 +149,32 @@ public class ObjectTracker {
 
         /*
          * Return a copy.
-         *
-         * This prevents outside code from directly
-         * modifying our internal tracking list.
          */
         return new ArrayList<>(trackedObjects);
     }
 
 
     /**
-     * ========================================================
+     * CHECK WHETHER OBJECT IS CURRENTLY TRACKER
+     * Used by the event system to determine whether
+     * an object still exists in the tracker.
+     */
+    public synchronized boolean containsObject(
+            int objectId
+    ) {
+        for (TrackedObject object : trackedObjects) {
+
+            if (object.getId() == objectId) {
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
      * RESET TRACKER
-     * ========================================================
-     *
-     * Used when a new uploaded video starts.
-     *
-     * Example:
-     *
-     * Video 1:
-     *      person #1
-     *      dog #2
-     *
-     * New Video:
-     *      person #1
-     *      dog #2
-     *
-     * This prevents tracking IDs from continuing
-     * from the previous video.
      */
     public synchronized void reset() {
 
@@ -264,19 +189,19 @@ public class ObjectTracker {
 
 
     /**
-     * ========================================================
      * CALCULATE IoU
-     * ========================================================
-     *
      * Intersection over Union.
-     *
-     * Used to determine whether two bounding boxes
-     * belong to the same object.
      */
     private double calculateIoU(
             Rect a,
             Rect b
     ) {
+
+        if (a == null || b == null) {
+
+            return 0.0;
+        }
+
 
         int left = Math.max(
                 a.x(),
@@ -344,9 +269,7 @@ public class ObjectTracker {
 
 
     /**
-     * ========================================================
      * TRACKED OBJECT
-     * ========================================================
      */
     public static class TrackedObject {
 

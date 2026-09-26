@@ -741,9 +741,7 @@ public class VideoDescriptionService {
     }
 
     /**
-     * ================================================================
      * VIDEO FRAME
-     * ================================================================
      */
     private static class VideoFrame {
 
@@ -751,15 +749,10 @@ public class VideoDescriptionService {
 
         private final double timestamp;
 
-        private VideoFrame(
-                Path path,
-                double timestamp
+        private VideoFrame(Path path, double timestamp
         ) {
-
             this.path = path;
-
-            this.timestamp =
-                    timestamp;
+            this.timestamp = timestamp;
         }
     }
 }

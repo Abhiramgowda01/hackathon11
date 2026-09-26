@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Decides whether a new description is "usual" or "unusual" for a given
  * com.cctvai.camera by comparing its embedding to that com.cctvai.camera's recent history
  * (the rolling "baseline" of normal activity), using cosine similarity.
- *
  * If the new description doesn't resemble ANY recent normal activity
  * (max similarity below a threshold), it's flagged as unusual.
  * Anomalies are not added to the baseline, so they don't pollute "normal".

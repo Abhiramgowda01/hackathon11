@@ -455,9 +455,7 @@ public class VideoAnalysisService {
             }
 
             /*
-             * ====================================================
              * CLOSE EVENTS STILL ACTIVE AT VIDEO END
-             * ====================================================
              */
             double finalTime =
                     durationSeconds;
@@ -481,9 +479,7 @@ public class VideoAnalysisService {
             frame.release();
 
             /*
-             * ====================================================
              * GENERATE ONE OVERALL AI DESCRIPTION
-             * ====================================================
              */
             System.out.println();
             System.out.println(
@@ -520,9 +516,7 @@ public class VideoAnalysisService {
         }
 
             /*
-             * ====================================================
              * BUILD JSON RESPONSE
-             * ====================================================
              */
             Map<String, Object> result =
                     new LinkedHashMap<>();
@@ -605,9 +599,7 @@ public class VideoAnalysisService {
     }
 
     /**
-     * ========================================================
      * ROUND DECIMAL NUMBER
-     * ========================================================
      */
     private double round(
             double value
@@ -619,9 +611,7 @@ public class VideoAnalysisService {
     }
 
     /**
-     * ========================================================
      * FORMAT VIDEO TIME
-     * ========================================================
      */
     private String formatTime(
             double seconds
@@ -649,9 +639,7 @@ public class VideoAnalysisService {
     }
 
     /**
-     * ========================================================
      * ACTIVE VIDEO EVENT
-     * ========================================================
      */
     private static class ActiveVideoEvent {
 

@@ -20,35 +20,28 @@ import java.util.Random;
 
 /**
  * Turns a video frame (image bytes) into a natural-language description.
- *
  * Uses OpenAI's vision-capable model if an API key is configured.
  * Falls back to a lightweight offline heuristic captioner (brightness /
  * pixel-variance based) so the whole pipeline is runnable with zero API keys.
- *
  * Swap describeFrame's OpenAI branch for any other VLM (Gemini, Claude,
  * a local LLaVA server, etc.) — keep the same method signature.
  */
 @Service
 public class VlmService {
-
     private static final String PROMPT =
         "You are a CCTV monitoring assistant. Describe, in one or two plain " +
         "sentences, exactly what is happening in this com.cctvai.camera frame: how many " +
         "people/vehicles are present, what they are doing, and anything about " +
         "the scene worth noting. Be factual and concise. Do not speculate about intent.";
-
     private final HttpClient httpClient = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(10))
         .build();
     private final ObjectMapper mapper = new ObjectMapper();
     private final Random random = new Random();
-
     @Value("${openai.api-key:}")
     private String apiKey;
-
     @Value("${openai.vision-model:gpt-4o-mini}")
     private String visionModel;
-
     public String describeFrame(byte[] imageBytes, String cameraId) {
         if (apiKey != null && !apiKey.isBlank()) {
             try {
@@ -59,7 +52,6 @@ public class VlmService {
         }
         return describeFrameMock(imageBytes);
     }
-
     private String describeFrameOpenAI(byte[] imageBytes) throws IOException, InterruptedException {
         String b64 = Base64.getEncoder().encodeToString(imageBytes);
 
@@ -117,13 +109,11 @@ public class VlmService {
         try {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
             if (img == null) return "Unable to decode frame.";
-
             long sum = 0;
             long sumSq = 0;
             int w = img.getWidth(), h = img.getHeight();
             int sampleStep = Math.max(1, (w * h) / 5000); // sample for speed on large images
             int count = 0;
-
             for (int i = 0; i < w * h; i += sampleStep) {
                 int x = i % w, y = i / w;
                 if (y >= h) break;
@@ -133,15 +123,12 @@ public class VlmService {
                 sumSq += (long) gray * gray;
                 count++;
             }
-
             double mean = count > 0 ? (double) sum / count : 0;
             double variance = count > 0 ? ((double) sumSq / count) - (mean * mean) : 0;
             double activity = Math.min(1.0, Math.sqrt(Math.max(0, variance)) / 80.0); // normalized proxy for "busyness"
-
             String desc = activity > 0.5
                 ? BUSY_TEMPLATES.get(random.nextInt(BUSY_TEMPLATES.size()))
                 : NORMAL_TEMPLATES.get(random.nextInt(NORMAL_TEMPLATES.size()));
-
             if (mean < 60) {
                 desc += " Lighting conditions are low.";
             }

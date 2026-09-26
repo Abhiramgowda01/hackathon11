@@ -17,7 +17,6 @@ public class CameraStreamController {
         this.cameraProcessingService =
                 cameraProcessingService;
     }
-
     @GetMapping(
             value = "/camera/frame",
             produces = MediaType.IMAGE_JPEG_VALUE
@@ -32,7 +31,6 @@ public class CameraStreamController {
                     .noContent()
                     .build();
         }
-
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.IMAGE_JPEG)

@@ -8,15 +8,17 @@ import cctvai.detection.ObjectTracker.TrackedObject;
 import cctvai.model.Event;
 import cctvai.recording.VideoRecorder;
 import cctvai.repository.EventRepository;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.opencv.global.opencv_imgcodecs;
 import org.bytedeco.opencv.global.opencv_imgproc;
 import org.bytedeco.opencv.opencv_core.Mat;
-import org.bytedeco.opencv.opencv_core.Point;
 import org.bytedeco.opencv.opencv_core.Rect;
 import org.bytedeco.opencv.opencv_core.Scalar;
+
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -32,53 +34,137 @@ public class CameraProcessingService {
 
     private static final String CAMERA_ID = "webcam-0";
 
+
+    /*
+     * ============================================================
+     * SERVICES
+     * ============================================================
+     */
+
     private final CameraSource cameraSource;
+
     private final ObjectDetector objectDetector;
+
     private final ObjectTracker objectTracker;
+
     private final EventRepository eventRepository;
+
     private final VideoRecorder videoRecorder;
+
+    private final LiveActivityService liveActivityService;
+
+
+    /*
+     * ============================================================
+     * RUNNING STATE
+     * ============================================================
+     */
 
     private final AtomicBoolean running =
             new AtomicBoolean(false);
 
-    /*
-     * True only when the camera has successfully
-     * produced a recent frame.
-     */
-    private volatile boolean cameraOnline = false;
 
     /*
-     * Latest processed JPEG frame.
-     *
-     * Set to null when camera becomes offline so
-     * the browser cannot continue showing an old frame.
+     * True when camera is successfully producing frames.
      */
+
+    private volatile boolean cameraOnline = false;
+
+
+    /*
+     * Latest processed JPEG.
+     */
+
     private volatile byte[] latestJpegFrame;
+
 
     private Thread processingThread;
 
+
     /*
-     * Currently active events.
+     * ============================================================
+     * ACTIVE OBJECT EVENTS
+     * ============================================================
      *
-     * Key   = ObjectTracker ID
-     * Value = database Event
+     * One Event is created when an object first appears.
+     *
+     * It remains open while the object is tracked.
+     *
+     * When the object disappears:
+     *
+     *     1. final activity is obtained
+     *     2. description is changed
+     *     3. anomaly is updated
+     *     4. endTime is saved
+     *
+     * Therefore one object produces ONE database event.
      */
+
     private final Map<Integer, Event> activeEvents =
             new HashMap<>();
+
+
+    /*
+     * ============================================================
+     * LAST KNOWN FINAL ACTIVITY
+     * ============================================================
+     *
+     * ObjectActivityTracker removes an object from its internal
+     * state after it disappears.
+     *
+     * Therefore we keep the last activity reported by the live
+     * activity service here until the normal tracking event ends.
+     *
+     * Example:
+     *
+     * person #4
+     *     STATIONARY
+     *     WALKING
+     *     RUNNING
+     *
+     * lastKnownFinalActivity:
+     *
+     * 4 -> RUNNING
+     */
+
+    private final Map<Integer, String> lastKnownFinalActivity =
+            new HashMap<>();
+
+
+    /*
+     * ============================================================
+     * CONSTRUCTOR
+     * ============================================================
+     */
 
     public CameraProcessingService(
             CameraSource cameraSource,
             ObjectDetector objectDetector,
             ObjectTracker objectTracker,
             EventRepository eventRepository,
-            VideoRecorder videoRecorder
+            VideoRecorder videoRecorder,
+            LiveActivityService liveActivityService
     ) {
+
         this.cameraSource = cameraSource;
+
         this.objectDetector = objectDetector;
+
         this.objectTracker = objectTracker;
+
         this.eventRepository = eventRepository;
+
         this.videoRecorder = videoRecorder;
+
+        this.liveActivityService = liveActivityService;
     }
+
+
+    /*
+     * ============================================================
+     * START
+     * ============================================================
+     */
 
     @PostConstruct
     public void start() {
@@ -87,9 +173,13 @@ public class CameraProcessingService {
             return;
         }
 
+
         running.set(true);
+
         cameraOnline = false;
+
         latestJpegFrame = null;
+
 
         processingThread =
                 new Thread(
@@ -97,14 +187,23 @@ public class CameraProcessingService {
                         "cctv-camera-processing"
                 );
 
+
         processingThread.setDaemon(true);
 
         processingThread.start();
+
 
         System.out.println(
                 "CCTV camera processing started."
         );
     }
+
+
+    /*
+     * ============================================================
+     * CAMERA PROCESSING LOOP
+     * ============================================================
+     */
 
     private void processCamera() {
 
@@ -112,18 +211,28 @@ public class CameraProcessingService {
 
             Mat frame = null;
 
+
             try {
 
                 /*
-                 * Read frame from camera.
+                 * ------------------------------------------------
+                 * READ CAMERA FRAME
+                 * ------------------------------------------------
                  */
+
                 frame =
                         cameraSource.readFrame();
+
 
                 /*
                  * Camera did not return a frame.
                  */
-                if (frame == null || frame.empty()) {
+
+                if (
+                        frame == null
+                                ||
+                                frame.empty()
+                ) {
 
                     handleCameraOffline();
 
@@ -132,59 +241,143 @@ public class CameraProcessingService {
                     continue;
                 }
 
+
                 /*
-                 * Camera successfully returned a frame.
+                 * Camera is working.
                  */
+
                 handleCameraOnline();
 
-                /*
-                 * YOLO detection.
-                 */
-                List<Detection> detections =
-                        objectDetector.detect(frame);
 
                 /*
-                 * LIVE CAMERA TRACKER ONLY.
-                 *
-                 * This tracker is separate from the tracker
-                 * used by uploaded video analysis.
+                 * ------------------------------------------------
+                 * YOLO DETECTION
+                 * ------------------------------------------------
                  */
+
+                List<Detection> detections =
+                        objectDetector.detect(
+                                frame
+                        );
+
+
+                /*
+                 * ------------------------------------------------
+                 * OBJECT TRACKING
+                 * ------------------------------------------------
+                 *
+                 * This is the LIVE camera tracker.
+                 */
+
                 List<TrackedObject> trackedObjects =
                         objectTracker.update(
                                 detections
                         );
 
+
                 /*
-                 * Create/maintain/end live camera events.
+                 * ------------------------------------------------
+                 * LIVE ACTIVITY
+                 * ------------------------------------------------
+                 *
+                 * This updates:
+                 *
+                 * STATIONARY
+                 * WALKING
+                 * RUNNING
+                 * LOITERING
+                 *
+                 * etc.
                  */
+
+                liveActivityService.update(
+                        trackedObjects
+                );
+
+
+                /*
+                 * ------------------------------------------------
+                 * REMEMBER CURRENT FINAL ACTIVITY
+                 * ------------------------------------------------
+                 *
+                 * This must happen BEFORE we call
+                 * updateTrackingEvents().
+                 *
+                 * If an object disappears in this frame,
+                 * ObjectActivityTracker may remove its state.
+                 *
+                 * We therefore remember its latest finalActivity.
+                 */
+
+                rememberFinalActivities();
+
+
+                /*
+                 * ------------------------------------------------
+                 * DATABASE EVENT LIFECYCLE
+                 * ------------------------------------------------
+                 *
+                 * New object:
+                 *
+                 *     create event
+                 *
+                 * Existing object:
+                 *
+                 *     keep event open
+                 *
+                 * Disappeared object:
+                 *
+                 *     save final activity
+                 *     close event
+                 */
+
                 updateTrackingEvents(
                         trackedObjects
                 );
 
+
                 /*
-                 * Draw bounding boxes BEFORE recording.
+                 * ------------------------------------------------
+                 * DRAW BOUNDING BOXES
+                 * ------------------------------------------------
                  *
-                 * Therefore the saved MP4 also contains
-                 * the bounding boxes and tracking IDs.
+                 * IMPORTANT:
+                 *
+                 * Only rectangles are drawn.
+                 *
+                 * No label.
+                 * No ID.
+                 * No confidence text.
                  */
+
                 drawTrackedObjects(
                         frame,
                         trackedObjects
                 );
 
+
                 /*
-                 * Record processed frame.
+                 * ------------------------------------------------
+                 * RECORD PROCESSED FRAME
+                 * ------------------------------------------------
                  */
+
                 videoRecorder.writeFrame(
                         frame,
                         CAMERA_ID
                 );
 
+
                 /*
-                 * Console information.
+                 * ------------------------------------------------
+                 * CONSOLE INFORMATION
+                 * ------------------------------------------------
                  */
-                for (TrackedObject object :
-                        trackedObjects) {
+
+                for (
+                        TrackedObject object
+                        : trackedObjects
+                ) {
 
                     System.out.println(
                             "Detected: "
@@ -199,10 +392,17 @@ public class CameraProcessingService {
                     );
                 }
 
+
                 /*
-                 * Send processed frame to browser.
+                 * ------------------------------------------------
+                 * SEND FRAME TO BROWSER
+                 * ------------------------------------------------
                  */
-                updateLatestJpegFrame(frame);
+
+                updateLatestJpegFrame(
+                        frame
+                );
+
 
             } catch (Exception e) {
 
@@ -211,31 +411,39 @@ public class CameraProcessingService {
                                 + e.getMessage()
                 );
 
-                /*
-                 * Any camera processing exception is treated
-                 * as camera offline.
-                 */
+
+                e.printStackTrace();
+
+
                 handleCameraOffline();
 
+
                 sleep(1000);
+
 
             } finally {
 
                 if (frame != null) {
+
                     frame.close();
                 }
             }
         }
     }
 
-    /**
-     * Called whenever a valid camera frame is received.
+
+    /*
+     * ============================================================
+     * CAMERA ONLINE
+     * ============================================================
      */
+
     private void handleCameraOnline() {
 
         if (!cameraOnline) {
 
             cameraOnline = true;
+
 
             System.out.println(
                     "CAMERA ONLINE"
@@ -243,15 +451,13 @@ public class CameraProcessingService {
         }
     }
 
-    /**
-     * Called when camera frame reading fails.
-     *
-     * Important:
-     * - clears the old JPEG
-     * - closes active events
-     * - resets live tracker
-     * - prevents old objects from appearing as live objects
+
+    /*
+     * ============================================================
+     * CAMERA OFFLINE
+     * ============================================================
      */
+
     private void handleCameraOffline() {
 
         if (cameraOnline) {
@@ -261,78 +467,175 @@ public class CameraProcessingService {
             );
         }
 
+
         cameraOnline = false;
 
+
         /*
-         * Very important:
-         * remove the last successful frame.
+         * Remove stale browser frame.
          */
+
         latestJpegFrame = null;
 
+
         /*
-         * Close any live events because the camera
-         * is no longer providing frames.
+         * Finalize all objects currently being tracked.
          */
+
         closeActiveEvents();
 
+
         /*
-         * Reset the LIVE tracker.
-         *
-         * This ensures objects from before the camera outage
-         * cannot continue after the camera comes back.
+         * Clear final activity cache.
          */
+
+        lastKnownFinalActivity.clear();
+
+
+        /*
+         * Reset live tracker.
+         */
+
         objectTracker.reset();
+
+
+        /*
+         * Reset live activity.
+
+         */
+
+        liveActivityService.reset();
     }
 
-    /**
-     * Handles the complete event lifecycle.
+
+    /*
+     * ============================================================
+     * REMEMBER FINAL ACTIVITIES
+     * ============================================================
      *
-     * New tracker ID
-     *      -> event START
-     *
-     * Tracker ID remains alive
-     *      -> event remains active
-     *
-     * Tracker ID disappears completely
-     *      -> event END
+     * Reads the current LiveActivityService state and remembers
+     * the final activity for each object.
      */
+
+    private void rememberFinalActivities() {
+
+        List<ObjectActivityTracker.ActivityState>
+                activities =
+                liveActivityService
+                        .getCurrentActivities();
+
+
+        if (
+                activities == null
+                        ||
+                        activities.isEmpty()
+        ) {
+
+            return;
+        }
+
+
+        for (
+                ObjectActivityTracker.ActivityState activity
+                : activities
+        ) {
+
+            int objectId =
+                    activity.getObjectId();
+
+
+            String finalActivity =
+                    activity.getFinalActivity();
+
+
+            if (
+                    finalActivity != null
+                            &&
+                            !finalActivity.isBlank()
+            ) {
+
+                lastKnownFinalActivity.put(
+                        objectId,
+                        finalActivity
+                );
+            }
+        }
+    }
+
+
+    /*
+     * ============================================================
+     * OBJECT EVENT LIFECYCLE
+     * ============================================================
+     *
+     * One database event per detected object.
+     *
+     * START:
+     *
+     *     person #4 detected
+     *
+     * END:
+     *
+     *     person #4 -> RUNNING
+     *
+     * This means the database contains the final activity
+     * together with the object's complete start/end lifetime.
+     */
+
     private void updateTrackingEvents(
             List<TrackedObject> trackedObjects
     ) {
 
         /*
-         * IDs currently existing in ObjectTracker.
-         *
-         * ObjectTracker keeps temporarily missed objects
-         * alive, so an event does not immediately end
-         * after one missed detection.
+         * IDs that are currently alive.
          */
+
         Set<Integer> currentTrackedIds =
                 new HashSet<>();
 
-        for (TrackedObject object :
-                trackedObjects) {
+
+        /*
+         * --------------------------------------------------------
+         * CURRENT OBJECTS
+         * --------------------------------------------------------
+         */
+
+        for (
+                TrackedObject object
+                : trackedObjects
+        ) {
 
             int objectId =
                     object.getId();
+
 
             currentTrackedIds.add(
                     objectId
             );
 
+
             /*
-             * New tracked object.
+             * ----------------------------------------------------
+             * NEW OBJECT
+             * ----------------------------------------------------
              */
-            if (!activeEvents.containsKey(objectId)) {
+
+            if (
+                    !activeEvents.containsKey(
+                            objectId
+                    )
+            ) {
 
                 Instant startTime =
                         Instant.now();
+
 
                 String description =
                         object.getLabel()
                                 + " #"
                                 + objectId
                                 + " detected";
+
 
                 Event event =
                         new Event(
@@ -343,18 +646,24 @@ public class CameraProcessingService {
                                 description
                         );
 
+
                 /*
                  * Save immediately.
                  *
-                 * endTime remains NULL while
-                 * the object is active.
+                 * endTime stays NULL while the object
+                 * is being tracked.
                  */
-                eventRepository.save(event);
+
+                eventRepository.save(
+                        event
+                );
+
 
                 activeEvents.put(
                         objectId,
                         event
                 );
+
 
                 System.out.println(
                         "EVENT START: "
@@ -365,68 +674,179 @@ public class CameraProcessingService {
             }
         }
 
+
         /*
-         * Copy active IDs because we may remove
-         * entries from activeEvents below.
+         * --------------------------------------------------------
+         * OBJECTS THAT DISAPPEARED
+         * --------------------------------------------------------
          */
+
         Set<Integer> activeIds =
                 new HashSet<>(
                         activeEvents.keySet()
                 );
 
-        for (Integer objectId :
-                activeIds) {
+
+        for (
+                Integer objectId
+                : activeIds
+        ) {
 
             /*
-             * Object no longer exists in ObjectTracker.
+             * Object is no longer present in
+             * ObjectTracker.
              */
-            if (!currentTrackedIds.contains(
-                    objectId
-            )) {
+
+            if (
+                    !currentTrackedIds.contains(
+                            objectId
+                    )
+            ) {
 
                 Event event =
                         activeEvents.get(
                                 objectId
                         );
 
+
                 if (event != null) {
 
                     Instant endTime =
                             Instant.now();
 
+
+                    /*
+                     * Get the final activity.
+                     */
+
+                    String finalActivity =
+                            lastKnownFinalActivity.get(
+                                    objectId
+                            );
+
+
+                    /*
+                     * Fallback if no activity was available.
+                     */
+
+                    if (
+                            finalActivity == null
+                                    ||
+                                    finalActivity.isBlank()
+                    ) {
+
+                        finalActivity =
+                                "STATIONARY";
+                    }
+
+
+                    /*
+                     * ------------------------------------------------
+                     * FINAL DATABASE DESCRIPTION
+                     * ------------------------------------------------
+                     *
+                     * Example:
+                     *
+                     * person #4 → RUNNING
+                     *
+                     * dog #2 → WALKING
+                     *
+                     * car #8 → MOVING
+                     */
+
+                    String finalDescription =
+                            event.getObjectType()
+                                    + " #"
+                                    + objectId
+                                    + " → "
+                                    + finalActivity;
+
+
+                    /*
+                     * Update the existing event.
+                     *
+                     * We do NOT create another database row.
+                     */
+
+                    event.setDescription(
+                            finalDescription
+                    );
+
+
+                    /*
+                     * Mark loitering as anomaly.
+                     *
+                     * Other activities remain normal.
+                     */
+
+                    event.setAnomaly(
+                            finalActivity.equals(
+                                    "LOITERING"
+                            )
+                    );
+
+
+                    /*
+                     * Store end time.
+                     */
+
                     event.setEndTime(
                             endTime
                     );
+
+
+                    /*
+                     * Save final event.
+                     */
 
                     eventRepository.save(
                             event
                     );
 
+
                     System.out.println(
-                            "EVENT END: "
-                                    + event.getDescription()
+                            "FINAL ACTIVITY: "
+                                    + finalDescription
                                     + " at "
                                     + endTime
                     );
                 }
 
+
+                /*
+                 * Remove from active events.
+                 */
+
                 activeEvents.remove(
+                        objectId
+                );
+
+
+                /*
+                 * Remove cached final activity.
+                 */
+
+                lastKnownFinalActivity.remove(
                         objectId
                 );
             }
         }
     }
 
-    /**
-     * Converts the processed OpenCV frame to JPEG
-     * for the browser.
+
+    /*
+     * ============================================================
+     * JPEG FRAME
+     * ============================================================
      */
+
     private void updateLatestJpegFrame(
             Mat frame
     ) {
 
         BytePointer encoded =
                 new BytePointer();
+
 
         try {
 
@@ -437,26 +857,33 @@ public class CameraProcessingService {
                             encoded
                     );
 
+
             if (!success) {
                 return;
             }
 
+
             int size =
                     (int) encoded.limit();
+
 
             if (size <= 0) {
                 return;
             }
 
+
             byte[] jpegBytes =
                     new byte[size];
+
 
             encoded.get(
                     jpegBytes
             );
 
+
             latestJpegFrame =
                     jpegBytes;
+
 
         } finally {
 
@@ -464,39 +891,51 @@ public class CameraProcessingService {
         }
     }
 
-    /**
-     * Returns the latest processed JPEG.
-     *
-     * Returns null when camera is offline.
+
+    /*
+     * ============================================================
+     * GET LATEST FRAME
+     * ============================================================
      */
+
     public byte[] getLatestJpegFrame() {
+
         return latestJpegFrame;
     }
 
-    /**
-     * Returns whether the camera is currently online.
+
+    /*
+     * ============================================================
+     * CAMERA STATUS
+     * ============================================================
      */
+
     public boolean isCameraOnline() {
+
         return cameraOnline;
     }
 
-    /**
-     * Draw all currently tracked objects.
+
+    /*
+     * DRAW BOUNDING BOXES
+     * IMPORTANT:
+     * The browser video should show ONLY bounding boxes.
+     * No:
+     * person #1
+     * 92%
+     * text is drawn on the image.
      */
     private void drawTrackedObjects(
             Mat frame,
             List<TrackedObject> objects
     ) {
-
-        for (TrackedObject object :
-                objects) {
+        for (
+                TrackedObject object
+                : objects
+        ) {
 
             Rect box =
                     object.getBoundingBox();
-
-            /*
-             * Bounding box.
-             */
             opencv_imgproc.rectangle(
                     frame,
                     box,
@@ -510,53 +949,13 @@ public class CameraProcessingService {
                     opencv_imgproc.LINE_8,
                     0
             );
-
-            /*
-             * Label.
-             *
-             * Example:
-             *
-             * person #4 87%
-             */
-            String label =
-                    object.getLabel()
-                            + " #"
-                            + object.getId()
-                            + " "
-                            + String.format(
-                            "%.0f%%",
-                            object.getConfidence()
-                                    * 100
-                    );
-
-            Point textPosition =
-                    new Point(
-                            box.x(),
-                            Math.max(
-                                    20,
-                                    box.y() - 8
-                            )
-                    );
-
-            opencv_imgproc.putText(
-                    frame,
-                    label,
-                    textPosition,
-                    opencv_imgproc
-                            .FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    new Scalar(
-                            0,
-                            255,
-                            0,
-                            0
-                    ),
-                    2,
-                    opencv_imgproc.LINE_8,
-                    false
-            );
         }
     }
+
+
+    /*
+     * SLEEP
+     */
 
     private void sleep(
             long milliseconds
@@ -577,6 +976,11 @@ public class CameraProcessingService {
         }
     }
 
+
+    /*
+     * STOP
+     */
+
     @PreDestroy
     public void stop() {
 
@@ -584,30 +988,54 @@ public class CameraProcessingService {
 
         cameraOnline = false;
 
-        /*
-         * Remove old frame so the browser cannot
-         * display a stale image after shutdown.
-         */
-        latestJpegFrame = null;
 
         /*
-         * Close active database events.
+         * Remove stale browser frame.
          */
+
+        latestJpegFrame = null;
+
+
+        /*
+         * Finalize currently active object events.
+         */
+
         closeActiveEvents();
+
+
+        /*
+         * Clear final activity cache.
+         */
+
+        lastKnownFinalActivity.clear();
+
 
         /*
          * Reset live tracker.
          */
+
         objectTracker.reset();
 
+
         /*
-         * Close MP4 recording.
+         * Reset activity tracker.
+
          */
+
+        liveActivityService.reset();
+
+
+        /*
+         * Stop recording.
+         */
+
         videoRecorder.stop();
+
 
         /*
          * Wait for processing thread.
          */
+
         if (processingThread != null) {
 
             try {
@@ -623,37 +1051,98 @@ public class CameraProcessingService {
             }
         }
 
+
         System.out.println(
                 "CCTV camera processing stopped."
         );
     }
 
-    /**
-     * Close events that are still active.
+
+    /*
+     * CLOSE ACTIVE EVENTS
+     * Used when:
+     * - camera goes offline
+     * - application shuts down
      */
+
     private void closeActiveEvents() {
 
         if (activeEvents.isEmpty()) {
+
             return;
         }
+
 
         Instant endTime =
                 Instant.now();
 
-        for (Event event :
-                activeEvents.values()) {
 
-            if (event.getEndTime() == null) {
+        for (
+                Event event
+                : activeEvents.values()
+        ) {
+
+            if (
+                    event.getEndTime()
+                            == null
+            ) {
+
+                /*
+                 * Try to get final activity.
+                 */
+
+                String finalActivity =
+                        lastKnownFinalActivity.get(
+                                event.getObjectId()
+                        );
+
+
+                if (
+                        finalActivity == null
+                                ||
+                                finalActivity.isBlank()
+                ) {
+
+                    finalActivity =
+                            "STATIONARY";
+                }
+
+
+                /*
+                 * Final description.
+                 */
+
+                String finalDescription =
+                        event.getObjectType()
+                                + " #"
+                                + event.getObjectId()
+                                + " → "
+                                + finalActivity;
+
+
+                event.setDescription(
+                        finalDescription
+                );
+
+
+                event.setAnomaly(
+                        finalActivity.equals(
+                                "LOITERING"
+                        )
+                );
+
 
                 event.setEndTime(
                         endTime
                 );
+
 
                 eventRepository.save(
                         event
                 );
             }
         }
+
 
         activeEvents.clear();
     }

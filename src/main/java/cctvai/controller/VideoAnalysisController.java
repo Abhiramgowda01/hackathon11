@@ -25,19 +25,6 @@ public class VideoAnalysisController {
     }
 
 
-    /**
-     * ========================================================
-     * VIDEO ANALYSIS ENDPOINT
-     * ========================================================
-     *
-     * Website sends:
-     *
-     * POST /video/analyse
-     *
-     * with:
-     *
-     * file = uploaded video
-     */
     @PostMapping(
             value = "/analyse",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -45,12 +32,6 @@ public class VideoAnalysisController {
     public ResponseEntity<?> analyseVideo(
             @RequestParam("file") MultipartFile file
     ) {
-
-        /*
-         * ====================================================
-         * CHECK FILE
-         * ====================================================
-         */
         if (file == null || file.isEmpty()) {
 
             return ResponseEntity
@@ -64,11 +45,6 @@ public class VideoAnalysisController {
         }
 
 
-        /*
-         * ====================================================
-         * GET FILE NAME
-         * ====================================================
-         */
         String filename =
                 file.getOriginalFilename();
 
@@ -86,12 +62,6 @@ public class VideoAnalysisController {
                     );
         }
 
-
-        /*
-         * ====================================================
-         * CHECK EXTENSION
-         * ====================================================
-         */
         String lowerFilename =
                 filename.toLowerCase();
 
@@ -115,39 +85,19 @@ public class VideoAnalysisController {
                     );
         }
 
-
-        /*
-         * ====================================================
-         * START ANALYSIS
-         * ====================================================
-         */
         try {
 
             Map<String, Object> result =
                     videoAnalysisService.analyse(file);
 
-
-            /*
-             * Send analysis result back
-             * to the website.
-             */
             return ResponseEntity.ok(
                     result
             );
 
         } catch (Exception e) {
-
-            /*
-             * Print complete error in IntelliJ console.
-             */
             e.printStackTrace();
 
-
-            /*
-             * Send useful error to browser.
-             */
-            return ResponseEntity
-                    .internalServerError()
+            return ResponseEntity.internalServerError()
                     .body(
                             Map.of(
                                     "error",

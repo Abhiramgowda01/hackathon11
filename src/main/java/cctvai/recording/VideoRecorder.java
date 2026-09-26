@@ -100,7 +100,6 @@ public class VideoRecorder {
 
             /*
              * Create:
-             *
              * recordings/2026-09-23/
              */
             Path directory =
@@ -123,7 +122,6 @@ public class VideoRecorder {
 
             /*
              * Example:
-             *
              * camera-webcam-0_22-05-30.mp4
              */
             String filename =

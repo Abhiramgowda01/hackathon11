@@ -35,22 +35,11 @@ public class EventController {
         this.anomalyService = anomalyService;
     }
 
-    // ---------------------------------------------------------
-    // HOME
-    // ---------------------------------------------------------
-
-    // ---------------------------------------------------------
-    // HEALTH CHECK
-    // ---------------------------------------------------------
 
     @GetMapping("/health")
     public Map<String, String> health() {
         return Map.of("status", "ok");
     }
-
-    // ---------------------------------------------------------
-    // PROCESS CCTV FRAME
-    // ---------------------------------------------------------
 
     @PostMapping(
             value = "/process_frame",
@@ -134,9 +123,6 @@ public class EventController {
         }
     }
 
-    // ---------------------------------------------------------
-    // GET EVENTS
-    // ---------------------------------------------------------
 
     @GetMapping("/events")
     public List<Event> listEvents(
@@ -160,19 +146,9 @@ public class EventController {
     ) {
 
         // Prevent invalid/huge limits
-        int safeLimit = Math.min(
-                Math.max(1, limit),
-                500
-        );
+        int safeLimit = Math.min(Math.max(1, limit), 500);
 
-        Pageable pageable = PageRequest.of(
-                0,
-                safeLimit,
-                Sort.by(
-                        Sort.Direction.DESC,
-                        "timestamp"
-                )
-        );
+        Pageable pageable = PageRequest.of(0, safeLimit, Sort.by(Sort.Direction.DESC, "timestamp"));
 
         // Camera + anomaly filter
         if (cameraId != null && anomaliesOnly) {
@@ -210,18 +186,12 @@ public class EventController {
                 );
     }
 
-    // ---------------------------------------------------------
-    // GET CAMERAS
-    // ---------------------------------------------------------
 
     @GetMapping("/cameras")
     public List<String> listCameras() {
         return eventRepository.findDistinctCameraIds();
     }
 
-    // ---------------------------------------------------------
-    // RESET CAMERA
-    // ---------------------------------------------------------
 
     @PostMapping("/cameras/{cameraId}/reset")
     public Map<String, String> resetCamera(

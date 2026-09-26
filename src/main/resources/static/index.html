@@ -10,7 +10,6 @@
 
   <title>CCTV AI Monitor</title>
 
-
   <style>
 
     :root {
@@ -242,6 +241,140 @@
       text-align: center;
 
       padding: 60px 20px;
+    }
+
+
+    /* =====================================================
+       LIVE OBJECT ACTIVITY
+       ===================================================== */
+
+    .activity-panel {
+
+      background: var(--panel);
+
+      border:
+              1px solid var(--border);
+
+      border-radius: 10px;
+
+      padding: 16px;
+
+      margin-bottom: 16px;
+    }
+
+
+    .activity-title {
+
+      font-size: 16px;
+
+      font-weight: 600;
+
+      margin-bottom: 14px;
+    }
+
+
+    .activity-row {
+
+      border:
+              1px solid var(--border);
+
+      border-radius: 8px;
+
+      padding: 12px;
+
+      margin-bottom: 10px;
+
+      background: #12161b;
+    }
+
+
+    .activity-row:last-child {
+
+      margin-bottom: 0;
+    }
+
+
+    .activity-header {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      gap: 10px;
+
+      margin-bottom: 8px;
+    }
+
+
+    .activity-object {
+
+      font-weight: 600;
+
+      font-size: 15px;
+    }
+
+
+    .activity-status {
+
+      font-size: 12px;
+
+      font-weight: 600;
+    }
+
+
+    .activity-normal {
+
+      color: var(--success);
+    }
+
+
+    .activity-anomaly {
+
+      color: var(--danger);
+    }
+
+
+    .activity-info {
+
+      display: grid;
+
+      grid-template-columns:
+                    repeat(3, 1fr);
+
+      gap: 8px;
+
+      color: var(--muted);
+
+      font-size: 13px;
+    }
+
+
+    .activity-info strong {
+
+      color: var(--text);
+    }
+
+
+    .activity-alert {
+
+      margin-top: 10px;
+
+      padding: 9px 10px;
+
+      border-radius: 6px;
+
+      background: #241419;
+
+      border:
+              1px solid var(--danger);
+
+      color: var(--danger);
+
+      font-size: 13px;
+
+      font-weight: 600;
     }
 
 
@@ -553,7 +686,7 @@
       display: grid;
 
       grid-template-columns:
-              repeat(4, 1fr);
+                    repeat(4, 1fr);
 
       gap: 10px;
 
@@ -827,7 +960,14 @@
       .video-info {
 
         grid-template-columns:
-                repeat(2, 1fr);
+                        repeat(2, 1fr);
+      }
+
+
+      .activity-info {
+
+        grid-template-columns:
+                        1fr;
       }
     }
 
@@ -843,7 +983,7 @@
       .video-info {
 
         grid-template-columns:
-                1fr;
+                        1fr;
       }
     }
 
@@ -934,6 +1074,28 @@
               class="camera-error"
       >
         Camera is offline.
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       LIVE OBJECT ACTIVITY
+       ===================================================== -->
+
+  <section class="activity-panel">
+
+    <div class="activity-title">
+      🎯 Live Object Activity
+    </div>
+
+
+    <div id="liveActivityList">
+
+      <div class="empty">
+        Waiting for detected objects...
       </div>
 
     </div>
@@ -1122,13 +1284,13 @@
 
         <div class="video-ai-description-header">
 
-          <span class="video-ai-description-icon">
-            📝
-          </span>
+                    <span class="video-ai-description-icon">
+                        📝
+                    </span>
 
           <span>
-            What Happened in This Video
-          </span>
+                        What Happened in This Video
+                    </span>
 
         </div>
 
@@ -1293,9 +1455,6 @@
       /*
        * =====================================================
        * CAMERA OFFLINE
-       *
-       * CameraStreamController returns 204 when
-       * there is no current camera frame.
        * =====================================================
        */
       if (response.status === 204) {
@@ -1499,6 +1658,219 @@
 
 
   /* =========================================================
+     LIVE OBJECT ACTIVITY
+     ========================================================= */
+
+  async function fetchLiveActivity() {
+
+    try {
+
+      const response =
+              await fetch(
+                      `${API_BASE}/activity/live?t=${Date.now()}`,
+                      {
+                        cache: "no-store"
+                      }
+              );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+                `Activity API returned HTTP ${response.status}`
+        );
+      }
+
+
+      const activities =
+              await response.json();
+
+
+      renderLiveActivity(
+              activities
+      );
+
+
+    } catch (error) {
+
+      console.error(
+              "Live activity error:",
+              error
+      );
+    }
+  }
+
+
+  function renderLiveActivity(
+          activities
+  ) {
+
+    const container =
+            document.getElementById(
+                    "liveActivityList"
+            );
+
+
+    if (!container) {
+      return;
+    }
+
+
+    if (
+            !activities ||
+            activities.length === 0
+    ) {
+
+      container.innerHTML = `
+                <div class="empty">
+                    No objects detected.
+                </div>
+            `;
+
+      return;
+    }
+
+
+    container.innerHTML =
+            activities
+                    .map(
+                            activity => {
+
+                              const objectType =
+                                      escapeHtml(
+                                              activity.objectType
+                                      );
+
+
+                              const objectId =
+                                      activity.objectId;
+
+
+                              const activityName =
+                                      escapeHtml(
+                                              activity.activity
+                                      );
+
+
+                              const confidence =
+                                      Number(
+                                              activity.confidence
+                                      ) * 100;
+
+
+                              const stationarySeconds =
+                                      activity.stationarySeconds;
+
+
+                              let alertHtml =
+                                      "";
+
+
+                              if (activity.anomaly) {
+
+                                alertHtml = `
+                                <div class="activity-alert">
+
+                                    ⚠
+                                    ${escapeHtml(
+                                        activity.alertMessage
+                                        ||
+                                        "Anomalous activity detected."
+                                )}
+
+                                </div>
+                            `;
+                              }
+
+
+                              return `
+
+                            <div class="activity-row">
+
+                                <div class="activity-header">
+
+                                    <div class="activity-object">
+
+                                        ${objectType}
+                                        #${objectId}
+
+                                    </div>
+
+
+                                    <div class="
+                                        activity-status
+                                        ${
+                                      activity.anomaly
+                                              ? "activity-anomaly"
+                                              : "activity-normal"
+                              }
+                                    ">
+
+                                        ${
+                                      activity.anomaly
+                                              ? "⚠ ANOMALY"
+                                              : "✓ NORMAL"
+                              }
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="activity-info">
+
+                                    <div>
+                                        Activity:
+                                        <strong>
+                                            ${activityName}
+                                        </strong>
+                                    </div>
+
+
+                                    <div>
+                                        Confidence:
+                                        <strong>
+                                            ${confidence.toFixed(1)}%
+                                        </strong>
+                                    </div>
+
+
+                                    <div>
+                                        Stationary:
+                                        <strong>
+                                            ${stationarySeconds}s
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                ${alertHtml}
+
+                            </div>
+                        `;
+                            }
+                    )
+                    .join("");
+  }
+
+
+  /*
+   * Start live activity immediately.
+   */
+  fetchLiveActivity();
+
+
+  /*
+   * Update activity once per second.
+   */
+  setInterval(
+          fetchLiveActivity,
+          1000
+  );
+
+
+  /* =========================================================
      CAMERAS
      ========================================================= */
 
@@ -1541,8 +1913,8 @@
                       .map(
                               camera =>
                                       `<option value="${escapeHtml(camera)}">
-                                          ${escapeHtml(camera)}
-                                      </option>`
+                                ${escapeHtml(camera)}
+                            </option>`
                       )
                       .join("");
 
@@ -1627,7 +1999,9 @@
               await response.json();
 
 
-      renderEvents(events);
+      renderEvents(
+              events
+      );
 
 
     } catch (error) {
@@ -1680,8 +2054,10 @@
             ).length;
 
 
-    if (!events
-            || events.length === 0) {
+    if (
+            !events ||
+            events.length === 0
+    ) {
 
       list.innerHTML =
               `<div class="empty">
@@ -1818,50 +2194,50 @@
 
     return `
 
-        <div class="event ${
+            <div class="event ${
             isAnomaly
                     ? "anomaly"
                     : ""
     }">
 
-            <span class="badge ${
+                <span class="badge ${
             isAnomaly
                     ? "anomaly"
                     : ""
     }">
 
-                ${
+                    ${
             isAnomaly
                     ? "UNUSUAL"
                     : "usual"
     }
 
-            </span>
+                </span>
 
 
-            <div class="event-body">
+                <div class="event-body">
 
-                <div class="event-meta">
+                    <div class="event-meta">
 
-                    <strong>
-                        ${escapeHtml(objectType)}
-                        ${escapeHtml(objectId)}
-                    </strong>
+                        <strong>
+                            ${escapeHtml(objectType)}
+                            ${escapeHtml(objectId)}
+                        </strong>
 
-                    ·
+                        ·
 
-                    ${escapeHtml(cameraId)}
+                        ${escapeHtml(cameraId)}
 
-                    ·
+                        ·
 
-                    ${escapeHtml(startTime)}
+                        ${escapeHtml(startTime)}
 
-                </div>
+                    </div>
 
 
-                <div class="event-desc">
+                    <div class="event-desc">
 
-                    ${
+                        ${
             escapeHtml(
                     event.description
                     ||
@@ -1869,37 +2245,37 @@
             )
     }
 
-                    <br><br>
+                        <br><br>
 
-                    <span style="
-                        color:var(--muted);
-                        font-size:12px;
-                    ">
+                        <span style="
+                            color:var(--muted);
+                            font-size:12px;
+                        ">
 
-                        Start:
-                        ${escapeHtml(startTime)}
+                            Start:
+                            ${escapeHtml(startTime)}
 
-                        &nbsp; | &nbsp;
+                            &nbsp; | &nbsp;
 
-                        End:
-                        ${escapeHtml(endTime)}
+                            End:
+                            ${escapeHtml(endTime)}
 
-                        &nbsp; | &nbsp;
+                            &nbsp; | &nbsp;
 
-                        Duration:
-                        ${escapeHtml(durationText)}
+                            Duration:
+                            ${escapeHtml(durationText)}
 
-                        ${escapeHtml(similarityText)}
+                            ${escapeHtml(similarityText)}
 
-                    </span>
+                        </span>
+
+                    </div>
 
                 </div>
 
             </div>
 
-        </div>
-
-    `;
+        `;
   }
 
 
@@ -2227,62 +2603,62 @@
 
     videoInformation.innerHTML = `
 
-        <div class="video-info-card">
+            <div class="video-info-card">
 
-            <div class="video-info-label">
-                Filename
-            </div>
+                <div class="video-info-label">
+                    Filename
+                </div>
 
-            <div class="video-info-value">
-                ${escapeHtml(
+                <div class="video-info-value">
+                    ${escapeHtml(
             result.filename
     )}
+                </div>
+
             </div>
 
-        </div>
 
+            <div class="video-info-card">
 
-        <div class="video-info-card">
+                <div class="video-info-label">
+                    Duration
+                </div>
 
-            <div class="video-info-label">
-                Duration
+                <div class="video-info-value">
+                    ${duration}
+                </div>
+
             </div>
 
-            <div class="video-info-value">
-                ${duration}
-            </div>
 
-        </div>
+            <div class="video-info-card">
 
+                <div class="video-info-label">
+                    FPS
+                </div>
 
-        <div class="video-info-card">
-
-            <div class="video-info-label">
-                FPS
-            </div>
-
-            <div class="video-info-value">
-                ${Number(
+                <div class="video-info-value">
+                    ${Number(
             result.fps
     ).toFixed(2)}
+                </div>
+
             </div>
 
-        </div>
 
+            <div class="video-info-card">
 
-        <div class="video-info-card">
+                <div class="video-info-label">
+                    Frames processed
+                </div>
 
-            <div class="video-info-label">
-                Frames processed
+                <div class="video-info-value">
+                    ${result.frame_count}
+                </div>
+
             </div>
 
-            <div class="video-info-value">
-                ${result.frame_count}
-            </div>
-
-        </div>
-
-    `;
+        `;
   }
 
 
@@ -2403,22 +2779,22 @@
       videoEventsTable.innerHTML =
 
               `
-                <tr>
+                    <tr>
 
-                    <td
+                        <td
                             colspan="5"
                             style="
                                 padding:20px;
                                 text-align:center;
                                 color:var(--muted);
                             "
-                    >
+                        >
 
-                        No tracking events detected.
+                            No tracking events detected.
 
-                    </td>
+                        </td>
 
-                </tr>
+                    </tr>
                 `;
 
 
@@ -2619,6 +2995,8 @@
 
                     fetchEvents();
 
+                    fetchLiveActivity();
+
                     updateLiveCamera();
                   }
           );
@@ -2674,6 +3052,8 @@
   fetchCameras();
 
   fetchEvents();
+
+  fetchLiveActivity();
 
 
   /*
