@@ -1,1237 +1,1286 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
-  <title>CCTV AI Monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisVision — CCTV AI Monitor</title>
 
   <style>
-
     :root {
-      --bg: #0f1216;
-      --panel: #171b21;
-      --border: #262b33;
-      --text: #e6e9ee;
-      --muted: #8b93a1;
-      --accent: #4f8cff;
-      --danger: #ff5470;
-      --success: #39d98a;
+      --bg: #0f1318;
+      --panel: #171c22;
+      --panel2: #1b2128;
+      --border: #2a323c;
+      --text: #eef2f6;
+      --muted: #8995a1;
+      --green: #4fbe82;
+      --green-dark: #1d6045;
+      --blue: #6e9fff;
+      --yellow: #e0ad4d;
+      --red: #df6b63;
     }
-
 
     * {
       box-sizing: border-box;
     }
 
-
+    html,
     body {
       margin: 0;
-
-      font-family:
-              -apple-system,
-              BlinkMacSystemFont,
-              "Segoe UI",
-              Roboto,
-              Arial,
-              sans-serif;
-
+      padding: 0;
+      min-height: 100%;
       background: var(--bg);
-
       color: var(--text);
+      font-family:
+              Inter,
+              Arial,
+              Helvetica,
+              sans-serif;
     }
 
+    body {
+      font-size: 13px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
 
     /* =====================================================
-       HEADER
+       LAYOUT
        ===================================================== */
 
-    header {
-
-      padding: 16px 24px;
-
-      border-bottom:
-              1px solid var(--border);
-
+    .app {
       display: flex;
+      min-height: 100vh;
+    }
 
+    .sidebar {
+      width: 225px;
+      min-width: 225px;
+      background: #13181e;
+      border-right: 1px solid var(--border);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 24px 28px 40px;
+    }
+
+    /* =====================================================
+       SIDEBAR
+       ===================================================== */
+
+    .brand {
+      display: flex;
       align-items: center;
+      gap: 9px;
+      padding: 5px 8px 25px;
+    }
 
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--green-dark);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .brand-name {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .beta {
+      margin-left: auto;
+      font-size: 8px;
+      color: #8ca99b;
+      background: #1d2924;
+      padding: 3px 5px;
+      border-radius: 4px;
+    }
+
+    .workspace {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px;
+      margin-bottom: 23px;
+    }
+
+    .workspace small {
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .15em;
+    }
+
+    .workspace strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+
+    .nav-label {
+      color: #78848f;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      padding: 0 8px 8px;
+    }
+
+    .nav a {
+      display: flex;
       justify-content: space-between;
-
-      gap: 15px;
-    }
-
-
-    header h1 {
-
-      font-size: 18px;
-
-      margin: 0;
-    }
-
-
-    header .controls {
-
-      display: flex;
-
-      gap: 8px;
-
       align-items: center;
-
-      flex-wrap: wrap;
+      color: #89949f;
+      text-decoration: none;
+      padding: 10px 9px;
+      border-radius: 8px;
+      margin: 2px 0;
     }
 
-
-    select,
-    button {
-
-      background: var(--panel);
-
-      color: var(--text);
-
-      border:
-              1px solid var(--border);
-
-      padding: 8px 12px;
-
-      border-radius: 6px;
-
-      font-size: 14px;
-
-      cursor: pointer;
-    }
-
-
-    button:hover {
-
-      border-color:
-              var(--accent);
-    }
-
-
-    button:disabled {
-
-      opacity: 0.5;
-
-      cursor: not-allowed;
-    }
-
-
-    button.primary {
-
-      background:
-              var(--accent);
-
-      border-color:
-              var(--accent);
-
+    .nav a:hover {
+      background: #1c2229;
       color: white;
     }
 
-
-    button.primary:hover {
-
-      opacity: 0.9;
+    .nav a.active {
+      background: #1d3229;
+      color: #70d49a;
     }
 
-
-    main {
-
-      padding: 20px 24px;
-
-      max-width: 1100px;
-
-      margin: 0 auto;
+    .nav-icon {
+      width: 20px;
+      display: inline-block;
     }
 
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+    }
+
+    .dot.yellow {
+      background: var(--yellow);
+    }
+
+    .sources {
+      margin-top: 25px;
+    }
+
+    .source {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 7px;
+      color: #89949f;
+      font-size: 11px;
+    }
+
+    .source-name {
+      flex: 1;
+    }
+
+    .source small {
+      font-size: 8px;
+      color: #67727d;
+    }
+
+    .side-card {
+      margin-top: auto;
+      background: #18231e;
+      border: 1px solid #263a30;
+      border-radius: 10px;
+      padding: 13px;
+    }
+
+    .side-card strong {
+      font-size: 11px;
+    }
+
+    .side-card p {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .side-card a {
+      color: #67c990;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .profile {
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+      padding-top: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 29px;
+      height: 29px;
+      border-radius: 50%;
+      background: #23372e;
+      color: #71d29a;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .profile-name {
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .profile-role {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      margin-top: 2px;
+    }
 
     /* =====================================================
-       LIVE CAMERA
+       TOP BAR
        ===================================================== */
 
-    .camera-panel {
-
-      background: var(--panel);
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 10px;
-
-      padding: 16px;
-
-      margin-bottom: 16px;
-    }
-
-
-    .camera-header {
-
+    .topbar {
       display: flex;
-
       justify-content: space-between;
-
       align-items: center;
-
-      margin-bottom: 12px;
+      margin-bottom: 20px;
     }
 
-
-    .camera-title {
-
-      font-size: 15px;
-
-      font-weight: 600;
+    .eyebrow {
+      color: #7d8994;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .16em;
     }
 
-
-    .camera-status {
-
-      font-size: 12px;
-
-      color:
-              var(--success);
+    .page-title {
+      font-size: 25px;
+      font-weight: 750;
+      margin-top: 4px;
     }
 
-
-    .camera-container {
-
-      width: 100%;
-
-      background: #000;
-
-      border-radius: 8px;
-
-      overflow: hidden;
-
+    .top-actions {
       display: flex;
-
-      justify-content: center;
-
+      gap: 8px;
       align-items: center;
-
-      min-height: 400px;
     }
 
+    .live-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: #193025;
+      color: #70d49a;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .ghost-button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: #9aa5af;
+      border-radius: 7px;
+      padding: 7px 11px;
+    }
+
+    /* =====================================================
+       CAMERA
+       ===================================================== */
+
+    .camera-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(230px, .8fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .camera-name {
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .camera-description {
+      color: var(--muted);
+      font-size: 9px;
+      margin-top: 3px;
+    }
+
+    .camera-live {
+      background: #193025;
+      color: #6ed298;
+      padding: 5px 7px;
+      border-radius: 5px;
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .camera-wrap {
+      height: 410px;
+      background: #080b0e;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     #liveCamera {
-
-      display: block;
-
       width: 100%;
-
-      height: auto;
-
-      max-height: 650px;
-
+      height: 100%;
       object-fit: contain;
-
-      background: #000;
+      display: none;
     }
-
 
     .camera-error {
-
-      color: var(--muted);
-
-      text-align: center;
-
-      padding: 60px 20px;
+      color: #7f8993;
+      font-size: 12px;
     }
 
+    .camera-wrap::after {
+      content: "LIVE AI";
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(15, 30, 24, .8);
+      color: white;
+      padding: 5px 7px;
+      border-radius: 5px;
+      font-size: 8px;
+      letter-spacing: .12em;
+    }
+
+    .camera-footer {
+      padding: 9px 13px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .signal {
+      color: var(--green);
+    }
+
+    /* =====================================================
+       OVERVIEW
+       ===================================================== */
+
+    .overview-card {
+      padding: 16px;
+    }
+
+    .overview-card + .overview-card {
+      border-top: 1px solid var(--border);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .metric {
+      font-size: 29px;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+
+    .metric-sub {
+      color: var(--muted);
+      font-size: 9px;
+      margin-top: 3px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+    }
+
+    .status-row:last-child {
+      border-bottom: 0;
+    }
+
+    .status-good {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    /* =====================================================
+       SECTION
+       ===================================================== */
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      margin: 25px 0 10px;
+    }
+
+    .section-kicker {
+      color: #78848f;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: .16em;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
 
     /* =====================================================
        LIVE OBJECT ACTIVITY
        ===================================================== */
 
     .activity-panel {
-
       background: var(--panel);
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 10px;
-
-      padding: 16px;
-
-      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
     }
-
 
     .activity-title {
-
+      display: block;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
       font-size: 16px;
-
-      font-weight: 600;
-
-      margin-bottom: 14px;
+      font-weight: 700;
     }
 
+    .activity-title::before {
+      content: "🎯 ";
+    }
+
+    #liveActivityList {
+      display: flex;
+      flex-direction: column;
+    }
 
     .activity-row {
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 8px;
-
-      padding: 12px;
-
-      margin-bottom: 10px;
-
-      background: #12161b;
+      position: relative;
+      padding: 15px 18px 15px 22px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
     }
-
 
     .activity-row:last-child {
-
-      margin-bottom: 0;
+      border-bottom: 0;
     }
 
+    .activity-row::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      background: var(--green);
+      border-radius: 0 4px 4px 0;
+    }
 
-    .activity-header {
+    .activity-row.is-anomaly::before {
+      background: var(--red);
+    }
 
+    .activity-topline {
       display: flex;
-
       justify-content: space-between;
-
-      align-items: center;
-
-      gap: 10px;
-
-      margin-bottom: 8px;
+      gap: 15px;
     }
-
 
     .activity-object {
-
-      font-weight: 600;
-
-      font-size: 15px;
+      font-size: 14px;
+      font-weight: 700;
     }
 
-
-    .activity-status {
-
-      font-size: 12px;
-
-      font-weight: 600;
+    .activity-time {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
     }
 
-
-    .activity-normal {
-
-      color: var(--success);
+    .activity-action {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #dfe5ea;
     }
 
-
-    .activity-anomaly {
-
-      color: var(--danger);
+    .activity-icon {
+      font-size: 16px;
     }
-
 
     .activity-info {
-
-      display: grid;
-
-      grid-template-columns:
-                    repeat(3, 1fr);
-
-      gap: 8px;
-
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 10px;
       color: var(--muted);
-
-      font-size: 13px;
+      font-size: 10px;
     }
-
 
     .activity-info strong {
-
-      color: var(--text);
+      color: #c8d0d7;
     }
 
+    .activity-normal {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .activity-anomaly {
+      color: var(--red);
+      font-weight: 700;
+    }
 
     .activity-alert {
-
-      margin-top: 10px;
-
-      padding: 9px 10px;
-
-      border-radius: 6px;
-
-      background: #241419;
-
-      border:
-              1px solid var(--danger);
-
-      color: var(--danger);
-
-      font-size: 13px;
-
-      font-weight: 600;
+      margin-top: 8px;
+      color: var(--red);
+      font-size: 10px;
     }
 
+    /* =====================================================
+       ACTIVITY HISTORY
+       ===================================================== */
+
+    .activity-history-panel {
+      margin-top: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .activity-history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-clear {
+      border: 1px solid var(--border);
+      background: #20262d;
+      color: #9da7b0;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    .history-clear:hover {
+      background: #293139;
+      color: white;
+    }
+
+    #activityHistoryList {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 4px 1fr auto;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-item:last-child {
+      border-bottom: 0;
+    }
+
+    .history-marker {
+      width: 3px;
+      height: 40px;
+      border-radius: 5px;
+      background: var(--green);
+    }
+
+    .history-item.is-anomaly .history-marker {
+      background: var(--red);
+    }
+
+    .history-object {
+      color: #edf1f4;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .history-action {
+      margin-top: 5px;
+      color: #d1d8de;
+      font-size: 13px;
+    }
+
+    .history-icon {
+      margin-right: 6px;
+    }
+
+    .history-meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .history-time {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .empty {
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+    }
 
     /* =====================================================
        STATISTICS
        ===================================================== */
 
     .stats {
-
-      display: flex;
-
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-
-      margin-bottom: 16px;
+      margin-top: 14px;
     }
-
 
     .stat {
-
-      flex: 1;
-
       background: var(--panel);
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 10px;
-
-      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 16px;
     }
 
-
-    .stat .label {
-
+    .stat-label {
       color: var(--muted);
-
-      font-size: 12px;
-
+      font-size: 9px;
       text-transform: uppercase;
     }
 
-
-    .stat .value {
-
-      font-size: 24px;
-
-      font-weight: 600;
-
-      margin-top: 4px;
+    .stat-value {
+      font-size: 25px;
+      font-weight: 800;
+      margin-top: 5px;
     }
-
 
     /* =====================================================
        EVENTS
        ===================================================== */
 
-    .event {
-
-      background: var(--panel);
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 10px;
-
-      padding: 14px 16px;
-
-      margin-bottom: 10px;
-
-      display: flex;
-
-      gap: 12px;
-
-      align-items: flex-start;
+    #eventList {
+      margin-top: 14px;
     }
 
+    .event {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 14px;
+      margin-bottom: 9px;
+      position: relative;
+    }
 
     .event.anomaly {
-
-      border-color:
-              var(--danger);
-
-      background: #241419;
+      border-left: 3px solid var(--red);
     }
-
 
     .badge {
-
-      font-size: 11px;
-
-      padding: 3px 8px;
-
-      border-radius: 20px;
-
-      white-space: nowrap;
-
-      background: #263047;
-
-      color: var(--accent);
+      display: inline-block;
+      background: #24304b;
+      color: #78a5ff;
+      border-radius: 14px;
+      padding: 5px 9px;
+      font-size: 9px;
+      margin-bottom: 7px;
     }
-
 
     .badge.anomaly {
-
-      background: #3a1420;
-
-      color: var(--danger);
+      background: #432c2a;
+      color: #e67b73;
     }
-
-
-    .event-body {
-
-      flex: 1;
-    }
-
 
     .event-meta {
-
       color: var(--muted);
-
-      font-size: 12px;
-
-      margin-bottom: 4px;
+      font-size: 11px;
     }
 
+    .event-meta strong {
+      color: #e5e9ed;
+    }
 
     .event-desc {
-
-      font-size: 14px;
-
-      line-height: 1.4;
+      margin-top: 8px;
+      color: #e5e9ed;
+      font-size: 13px;
     }
 
-
-    .empty {
-
+    .event-details {
+      margin-top: 8px;
       color: var(--muted);
-
-      text-align: center;
-
-      padding: 40px 0;
+      font-size: 10px;
     }
-
 
     /* =====================================================
        VIDEO ANALYZER
        ===================================================== */
 
     .video-panel {
-
-      background: var(--panel);
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 10px;
-
-      padding: 20px;
-
       margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
     }
-
-
-    .video-header {
-
-      display: flex;
-
-      justify-content: space-between;
-
-      align-items: center;
-
-      gap: 15px;
-
-      margin-bottom: 15px;
-    }
-
 
     .video-title {
-
-      font-size: 18px;
-
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 800;
     }
-
 
     .video-description {
-
       color: var(--muted);
-
-      font-size: 14px;
-
+      font-size: 11px;
+      margin: 8px 0 15px;
       line-height: 1.5;
-
-      margin-bottom: 20px;
     }
-
 
     .upload-area {
-
-      border:
-              2px dashed var(--border);
-
-      border-radius: 10px;
-
-      padding: 25px;
-
-      text-align: center;
-
-      background: #12161b;
-    }
-
-
-    .upload-area:hover {
-
-      border-color:
-              var(--accent);
-    }
-
-
-    #videoFile {
-
-      width: 100%;
-
-      max-width: 500px;
-
-      padding: 10px;
-
-      color: var(--text);
-
-      background: var(--panel);
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 6px;
-    }
-
-
-    .selected-video {
-
-      margin-top: 15px;
-
-      color: var(--muted);
-
-      font-size: 14px;
-    }
-
-
-    .video-actions {
-
-      margin-top: 18px;
-
       display: flex;
-
-      justify-content: center;
-
+      align-items: center;
       gap: 10px;
-
       flex-wrap: wrap;
     }
 
+    .upload-area input {
+      color: #aab3bc;
+      font-size: 10px;
+    }
 
-    #analyseVideoButton {
-
-      background:
-              var(--accent);
-
-      border-color:
-              var(--accent);
-
+    .analyse-button {
+      border: 0;
+      background: var(--green-dark);
       color: white;
-
-      font-weight: 600;
-
-      padding:
-              10px 20px;
+      padding: 8px 13px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
     }
 
+    .analyse-button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
 
+    .selected-video,
     .video-status {
-
-      margin-top: 20px;
-
-      padding: 14px;
-
-      border-radius: 8px;
-
-      background: #12161b;
-
-      border:
-              1px solid var(--border);
-
       color: var(--muted);
-
-      text-align: center;
+      font-size: 10px;
     }
-
 
     .video-results {
-
       display: none;
-
-      margin-top: 25px;
+      margin-top: 18px;
     }
-
 
     .video-info {
-
       display: grid;
-
-      grid-template-columns:
-                    repeat(4, 1fr);
-
-      gap: 10px;
-
-      margin-top: 15px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
     }
-
 
     .video-info-card {
-
-      background: #12161b;
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 8px;
-
-      padding: 12px;
+      background: #1c2229;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px;
     }
-
 
     .video-info-label {
-
       color: var(--muted);
-
-      font-size: 11px;
-
-      text-transform: uppercase;
+      font-size: 8px;
     }
-
 
     .video-info-value {
-
-      margin-top: 5px;
-
-      font-size: 15px;
-
-      font-weight: 600;
-
-      word-break: break-word;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 700;
     }
 
-
-    .detected-objects {
-
-      display: flex;
-
-      flex-wrap: wrap;
-
-      gap: 8px;
-
-      margin-top: 15px;
+    .video-description-card {
+      margin-top: 12px;
+      background: #1c2229;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
     }
 
-
-    .object-badge {
-
-      display: inline-block;
-
-      padding: 7px 12px;
-
-      border-radius: 20px;
-
-      background: #263047;
-
-      color: var(--accent);
-
-      border:
-              1px solid #34415e;
-
-      font-size: 13px;
-
-      font-weight: 600;
+    .video-description-title {
+      font-size: 10px;
+      font-weight: 700;
     }
 
-
-    .no-objects {
-
-      color: var(--muted);
-
-      padding: 10px 0;
+    .video-description-text {
+      margin-top: 6px;
+      color: #c5cdd4;
+      font-size: 10px;
+      line-height: 1.5;
     }
-
 
     .timeline-wrapper {
-
-      width: 100%;
-
       overflow-x: auto;
-
-      margin-top: 15px;
     }
-
 
     .timeline-table {
-
       width: 100%;
-
       border-collapse: collapse;
-
-      min-width: 650px;
+      font-size: 10px;
     }
 
+    .timeline-table th,
+    .timeline-table td {
+      padding: 9px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
 
     .timeline-table th {
-
-      background: #12161b;
-
       color: var(--muted);
-
-      font-size: 12px;
-
-      text-transform: uppercase;
-
-      text-align: left;
-
-      padding: 12px;
-
-      border:
-              1px solid var(--border);
     }
-
-
-    .timeline-table td {
-
-      padding: 12px;
-
-      border:
-              1px solid var(--border);
-
-      font-size: 13px;
-    }
-
-
-    .timeline-table tr:hover {
-
-      background: #1c2128;
-    }
-
-
-    .video-object-name {
-
-      font-weight: 600;
-
-      color: var(--text);
-    }
-
-
-    .video-object-id {
-
-      color: var(--accent);
-
-      font-weight: 600;
-    }
-
-
-    .video-error {
-
-      color: var(--danger);
-
-      background: #241419;
-
-      border:
-              1px solid var(--danger);
-    }
-
-
-    .video-success {
-
-      color: var(--success);
-
-      border-color:
-              var(--success);
-    }
-
-
-    /* =====================================================
-       AI VIDEO DESCRIPTION
-       ===================================================== */
-
-    .video-ai-description {
-
-      margin-top: 20px;
-
-      padding: 20px;
-
-      background: #12161b;
-
-      border:
-              1px solid var(--border);
-
-      border-radius: 10px;
-    }
-
-
-    .video-ai-description-header {
-
-      display: flex;
-
-      align-items: center;
-
-      gap: 10px;
-
-      margin-bottom: 12px;
-
-      font-size: 18px;
-
-      font-weight: 600;
-    }
-
-
-    .video-ai-description-icon {
-
-      font-size: 21px;
-    }
-
-
-    .video-ai-description-text {
-
-      color: var(--text);
-
-      font-size: 14px;
-
-      line-height: 1.8;
-
-      white-space: pre-wrap;
-    }
-
-
-    .video-ai-description-empty {
-
-      color: var(--muted);
-
-      font-size: 14px;
-    }
-
 
     /* =====================================================
        RESPONSIVE
        ===================================================== */
 
-    @media (max-width: 700px) {
+    @media (max-width: 1050px) {
 
-      header {
-
-        flex-direction: column;
-
-        align-items: flex-start;
+      .sidebar {
+        width: 190px;
+        min-width: 190px;
       }
 
-
-      header .controls {
-
-        width: 100%;
-
-        flex-wrap: wrap;
-      }
-
-
-      .stats {
-
-        flex-direction: column;
-      }
-
-
-      .camera-container {
-
-        min-height: 250px;
-      }
-
-
-      .video-info {
-
-        grid-template-columns:
-                        repeat(2, 1fr);
-      }
-
-
-      .activity-info {
-
-        grid-template-columns:
-                        1fr;
+      .camera-grid {
+        grid-template-columns: 1fr;
       }
     }
 
+    @media (max-width: 760px) {
 
-    @media (max-width: 450px) {
-
-      main {
-
-        padding: 12px;
+      .sidebar {
+        display: none;
       }
 
+      .main {
+        padding: 16px;
+      }
 
+      .camera-wrap {
+        height: 300px;
+      }
+
+      .stats,
       .video-info {
-
-        grid-template-columns:
-                        1fr;
+        grid-template-columns: 1fr;
       }
+
+      .topbar {
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .activity-topline,
+      .history-item {
+        display: block;
+      }
+
+      .activity-time,
+      .history-time {
+        margin-top: 5px;
+      }
+    }
+    /* =====================================================
+       RECORDINGS PANEL
+       ===================================================== */
+
+    .recordings-panel {
+      margin-top: 28px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+
+    .recordings-search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .recordings-date-input {
+      flex: 1;
+      min-width: 160px;
+      max-width: 220px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+    }
+
+    .recordings-date-input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .recordings-search-btn {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+
+    .recordings-search-btn:hover {
+      opacity: .85;
+    }
+
+    .recordings-reset-btn {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+
+    .recordings-reset-btn:hover {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+
+    .recordings-date-group {
+      margin-bottom: 18px;
+    }
+
+    .recordings-date-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .recording-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .recording-row:last-child {
+      border-bottom: none;
+    }
+
+    .recording-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .recording-name {
+      flex: 1;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .recording-size {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .recording-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .recording-btn {
+      font: inherit;
+      font-size: 12px;
+      padding: 5px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      transition: background .15s, border-color .15s;
+    }
+
+    .recording-btn:hover {
+      background: var(--border);
+    }
+
+    .recording-btn.play {
+      background: rgba(79,190,130,.12);
+      border-color: rgba(79,190,130,.3);
+      color: var(--green);
+    }
+
+    .recording-btn.play:hover {
+      background: rgba(79,190,130,.22);
+    }
+
+    .recording-player-wrap {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .recording-player-wrap video {
+      width: 100%;
+      max-height: 420px;
+      border-radius: 10px;
+      background: #000;
+      border: 1px solid var(--border);
+    }
+
+    .recordings-empty {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 16px 0;
+    }
+
+    .recordings-count-badge {
+      display: inline-block;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 2px 9px;
+      margin-left: 8px;
+      vertical-align: middle;
     }
 
   </style>
-
 </head>
-
 
 <body>
 
+<div class="app">
 
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
+  <!-- =====================================================
+       SIDEBAR
+       ===================================================== -->
 
-<header>
+  <aside class="sidebar">
 
-  <h1>
-    🎥 CCTV AI Monitor
-  </h1>
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div class="brand-name">AEGIS VISION</div>
+      <div class="beta">BETA</div>
+    </div>
 
+    <div class="workspace">
+      <small>Workspace</small>
+      <strong>Northstar Facilities</strong>
+    </div>
 
-  <div class="controls">
+    <div class="nav-label">Workspace</div>
 
-    <select id="cameraFilter">
+    <nav class="nav">
 
-      <option value="">
-        All cameras
-      </option>
+      <a href="#overview" class="active">
+            <span>
+                <span class="nav-icon">▣</span>
+                Overview
+            </span>
+      </a>
 
-    </select>
+      <a href="#camera">
+            <span>
+                <span class="nav-icon">▤</span>
+                Cameras
+            </span>
 
+        <span class="dot"></span>
+      </a>
 
-    <button id="anomalyToggle">
-      Show all
-    </button>
+      <a href="#activity">
+            <span>
+                <span class="nav-icon">◷</span>
+                Activity
+            </span>
+      </a>
 
+      <a href="#videoAnalyzer">
+            <span>
+                <span class="nav-icon">▦</span>
+                Analytics
+            </span>
+      </a>
 
-    <button
-            class="primary"
-            id="refreshBtn"
-    >
-      Refresh
-    </button>
+      <a href="#recordings">
+            <span>
+                <span class="nav-icon">⏺</span>
+                Recordings
+            </span>
+      </a>
 
-  </div>
+    </nav>
 
-</header>
+    <div class="sources">
 
+      <div class="nav-label">
+        Your sources
+      </div>
 
-<main>
+      <div class="source">
+        <span class="dot"></span>
+        <span class="source-name">
+                Live camera
+            </span>
+        <small>CAM 01</small>
+      </div>
+
+      <div class="source">
+        <span class="dot yellow"></span>
+        <span class="source-name">
+                Video analyzer
+            </span>
+        <small>AI</small>
+      </div>
+
+    </div>
+
+    <div class="side-card">
+      <strong>Need more coverage?</strong>
+
+      <p>
+        Connect another camera to see
+        additional feeds and events.
+      </p>
+
+      <a href="#">
+        Connect a camera →
+      </a>
+    </div>
+
+    <div class="profile">
+
+      <div class="avatar">
+        AI
+      </div>
+
+      <div>
+        <div class="profile-name">
+          AI Monitor
+        </div>
+
+        <span class="profile-role">
+                Workspace admin
+            </span>
+      </div>
+
+    </div>
+
+  </aside>
 
 
   <!-- =====================================================
-       LIVE CAMERA
+       MAIN
        ===================================================== -->
 
-  <section class="camera-panel">
+  <main class="main">
 
-    <div class="camera-header">
+    <!-- TOP BAR -->
 
-      <div class="camera-title">
-        📹 Live AI Camera
+    <div class="topbar" id="overview">
+
+      <div>
+
+        <div class="eyebrow">
+          Security workspace
+        </div>
+
+        <div class="page-title">
+          Overview
+        </div>
+
       </div>
 
-
-      <div
-              class="camera-status"
-              id="cameraStatus"
-      >
-        ● Connecting...
-      </div>
-
-    </div>
-
-
-    <div class="camera-container">
-
-      <img
-              id="liveCamera"
-              alt="Live CCTV camera"
-              style="display:none;"
-      >
-
-
-      <div
-              id="cameraError"
-              class="camera-error"
-      >
-        Camera is offline.
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =====================================================
-       LIVE OBJECT ACTIVITY
-       ===================================================== -->
-
-  <section class="activity-panel">
-
-    <div class="activity-title">
-      🎯 Live Object Activity
-    </div>
-
-
-    <div id="liveActivityList">
-
-      <div class="empty">
-        Waiting for detected objects...
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =====================================================
-       STATISTICS
-       ===================================================== -->
-
-  <div class="stats">
-
-
-    <div class="stat">
-
-      <div class="label">
-        Total events
-      </div>
-
-      <div
-              class="value"
-              id="statTotal"
-      >
-        0
-      </div>
-
-    </div>
-
-
-    <div class="stat">
-
-      <div class="label">
-        Anomalies
-      </div>
-
-      <div
-              class="value"
-              id="statAnomalies"
-      >
-        0
-      </div>
-
-    </div>
-
-
-    <div class="stat">
-
-      <div class="label">
-        Cameras
-      </div>
-
-      <div
-              class="value"
-              id="statCameras"
-      >
-        0
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       LIVE EVENTS
-       ===================================================== -->
-
-  <div id="eventList"></div>
-
-
-  <!-- =====================================================
-       VIDEO ANALYZER
-       ===================================================== -->
-
-  <section
-          class="video-panel"
-          id="videoAnalyzer"
-  >
-
-
-    <div class="video-header">
-
-      <div class="video-title">
-        🎞️ Video Analyzer
-      </div>
-
-    </div>
-
-
-    <div class="video-description">
-
-      Upload a recorded CCTV video
-      and let the AI analyze it
-      frame by frame.
-
-      <br><br>
-
-      Supported formats:
-
-      <strong>
-        MP4, AVI, MOV, MKV
-      </strong>
-
-    </div>
-
-
-    <!-- =================================================
-         UPLOAD AREA
-         ================================================= -->
-
-    <div class="upload-area">
-
-
-      <input
-              type="file"
-              id="videoFile"
-              accept=".mp4,.avi,.mov,.mkv,video/mp4,video/x-msvideo,video/quicktime"
-      >
-
-
-      <div
-              class="selected-video"
-              id="selectedVideo"
-      >
-        No video selected.
-      </div>
-
-
-      <div class="video-actions">
-
-        <button
-                id="analyseVideoButton"
-                disabled
-        >
-          ANALYSE VIDEO
+      <div class="top-actions">
+
+        <div class="live-pill">
+          <span class="dot"></span>
+          SYSTEM LIVE
+        </div>
+
+        <button class="ghost-button"
+                onclick="refreshAll()">
+          Refresh
         </button>
 
       </div>
@@ -1239,207 +1288,566 @@
     </div>
 
 
-    <!-- =================================================
-         STATUS
-         ================================================= -->
+    <!-- =====================================================
+         CAMERA
+         ===================================================== -->
 
-    <div
-            class="video-status"
-            id="videoStatus"
-    >
-      Waiting for video.
-    </div>
+    <section class="camera-grid" id="camera">
+
+      <div class="card">
+
+        <div class="card-header">
+
+          <div>
+
+            <div class="camera-name">
+              Live AI Camera
+            </div>
+
+            <div class="camera-description">
+              Laptop / USB webcam · real-time detection
+            </div>
+
+          </div>
+
+          <div class="camera-live">
+            ● LIVE
+          </div>
+
+        </div>
+
+        <div class="camera-wrap">
+
+          <img
+                  id="liveCamera"
+                  alt="Live CCTV camera"
+          >
+
+          <div
+                  id="cameraError"
+                  class="camera-error">
+            Connecting to camera...
+          </div>
+
+        </div>
+
+        <div class="camera-footer">
+
+            <span>
+                AI monitoring active
+            </span>
+
+          <span
+                  class="signal"
+                  id="cameraStatus">
+                ● Connecting...
+            </span>
+
+        </div>
+
+      </div>
 
 
-    <!-- =================================================
-         RESULTS
-         ================================================= -->
+      <!-- OVERVIEW -->
 
-    <div
-            class="video-results"
-            id="videoResults"
-    >
+      <div class="card">
 
+        <div class="overview-card">
 
-      <!-- VIDEO INFORMATION -->
+          <div class="metric-label">
+            Detected events
+          </div>
 
-      <h3>
-        📊 Video Information
-      </h3>
+          <div
+                  class="metric"
+                  id="statTotalTop">
+            0
+          </div>
 
-
-      <div
-              class="video-info"
-              id="videoInformation"
-      ></div>
-
-
-      <!-- OVERALL AI VIDEO DESCRIPTION -->
-
-      <div
-              class="video-ai-description"
-              id="videoDescriptionCard"
-              style="display:none;"
-      >
-
-        <div class="video-ai-description-header">
-
-                    <span class="video-ai-description-icon">
-                        📝
-                    </span>
-
-          <span>
-                        What Happened in This Video
-                    </span>
+          <div class="metric-sub">
+            Live event stream
+          </div>
 
         </div>
 
 
-        <div
-                class="video-ai-description-text"
-                id="videoDescription"
-        ></div>
+        <div class="overview-card">
+
+          <div class="metric-label">
+            Anomalies
+          </div>
+
+          <div
+                  class="metric"
+                  id="statAnomaliesTop">
+            0
+          </div>
+
+          <div class="metric-sub">
+            Items requiring attention
+          </div>
+
+        </div>
+
+
+        <div class="overview-card">
+
+          <div class="metric-label">
+            System status
+          </div>
+
+          <div class="status-row">
+            <span>Camera</span>
+            <span class="status-good">
+                    Online
+                </span>
+          </div>
+
+          <div class="status-row">
+            <span>YOLO model</span>
+            <span class="status-good">
+                    Active
+                </span>
+          </div>
+
+          <div class="status-row">
+            <span>Database</span>
+            <span class="status-good">
+                    Connected
+                </span>
+          </div>
+
+        </div>
 
       </div>
 
-
-      <!-- DETECTED OBJECTS -->
-
-      <h3
-              style="margin-top:30px;"
-      >
-        🔎 Detected Objects
-      </h3>
+    </section>
 
 
-      <div
-              class="detected-objects"
-              id="detectedObjects"
-      ></div>
+    <!-- =====================================================
+         LIVE OBJECT ACTIVITY
+         ===================================================== -->
 
+    <div
+            class="section-head"
+            id="activity">
 
-      <!-- EVENT TIMELINE -->
+      <div>
 
-      <h3
-              style="margin-top:30px;"
-      >
-        🕒 Event Timeline
-      </h3>
+        <div class="section-kicker">
+          LIVE MONITORING
+        </div>
 
-
-      <div class="timeline-wrapper">
-
-        <table class="timeline-table">
-
-          <thead>
-
-          <tr>
-
-            <th>
-              Object
-            </th>
-
-            <th>
-              ID
-            </th>
-
-            <th>
-              Start
-            </th>
-
-            <th>
-              End
-            </th>
-
-            <th>
-              Duration
-            </th>
-
-          </tr>
-
-          </thead>
-
-
-          <tbody
-                  id="videoEventsTable"
-          ></tbody>
-
-        </table>
+        <div class="section-title">
+          Current activity
+        </div>
 
       </div>
 
     </div>
 
-  </section>
+
+    <section class="activity-panel">
+
+      <div class="activity-title">
+        Live Object Activity
+      </div>
+
+      <div id="liveActivityList">
+
+        <div class="empty">
+          Waiting for detected objects...
+        </div>
+
+      </div>
+
+    </section>
 
 
-</main>
+    <!-- =====================================================
+         ACTIVITY HISTORY
+         ===================================================== -->
+
+    <section class="activity-history-panel">
+
+      <div class="activity-history-head">
+
+        <div>
+
+          <div class="section-kicker">
+            ACTIVITY HISTORY
+          </div>
+
+          <div class="section-title">
+            Recent Object Activity
+          </div>
+
+        </div>
+
+        <button
+                id="clearActivityHistory"
+                class="history-clear">
+          Clear
+        </button>
+
+      </div>
+
+      <div id="activityHistoryList">
+
+        <div class="empty">
+          Activity history will appear here.
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         STATISTICS
+         ===================================================== -->
+
+    <div class="stats">
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Total Events
+        </div>
+
+        <div
+                class="stat-value"
+                id="statTotal">
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Anomalies
+        </div>
+
+        <div
+                class="stat-value"
+                id="statAnomalies">
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-label">
+          Cameras
+        </div>
+
+        <div
+                class="stat-value"
+                id="statCameras">
+          0
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         EVENTS
+         ===================================================== -->
+
+    <div class="section-head">
+
+      <div>
+
+        <div class="section-kicker">
+          RECENT ACTIVITY
+        </div>
+
+        <div class="section-title">
+          Events worth a look
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div id="eventList">
+
+      <div class="empty">
+        Loading events...
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         VIDEO ANALYZER
+         ===================================================== -->
+
+    <section
+            class="video-panel"
+            id="videoAnalyzer">
+
+      <div class="video-title">
+        Video Analyzer
+      </div>
+
+      <div class="video-description">
+
+        Upload a recorded CCTV video and let
+        the AI analyze it frame by frame.
+
+        Supported formats:
+        <strong>
+          MP4, AVI, MOV, MKV
+        </strong>
+
+      </div>
+
+
+      <div class="upload-area">
+
+        <input
+                type="file"
+                id="videoFile"
+                accept=".mp4,.avi,.mov,.mkv,video/mp4,video/x-msvideo,video/quicktime"
+        >
+
+        <span
+                class="selected-video"
+                id="selectedVideo">
+            No video selected.
+        </span>
+
+        <button
+                class="analyse-button"
+                id="analyseVideoButton"
+                disabled>
+          ANALYSE VIDEO
+        </button>
+
+      </div>
+
+
+      <div
+              class="video-status"
+              id="videoStatus">
+        Waiting for video.
+      </div>
+
+
+      <div
+              class="video-results"
+              id="videoResults">
+
+        <h3>
+          Video Information
+        </h3>
+
+        <div
+                class="video-info"
+                id="videoInformation">
+        </div>
+
+
+        <div
+                class="video-description-card"
+                id="videoDescriptionCard">
+
+          <div class="video-description-title">
+            What Happened in This Video
+          </div>
+
+          <div
+                  class="video-description-text"
+                  id="videoDescription">
+          </div>
+
+        </div>
+
+
+        <h3>
+          Detected Objects
+        </h3>
+
+        <div id="detectedObjects"></div>
+
+
+        <h3>
+          Event Timeline
+        </h3>
+
+        <div class="timeline-wrapper">
+
+          <table class="timeline-table">
+
+            <thead>
+
+            <tr>
+              <th>Object</th>
+              <th>ID</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Duration</th>
+            </tr>
+
+            </thead>
+
+            <tbody
+                    id="videoEventsTable">
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         RECORDINGS
+         ===================================================== -->
+
+    <div class="section-head" id="recordings">
+
+      <div>
+
+        <div class="section-kicker">
+          CCTV ARCHIVE
+        </div>
+
+        <div class="section-title">
+          All Recordings
+          <span class="recordings-count-badge" id="recordingsTotalBadge">0</span>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <section class="recordings-panel">
+
+      <!-- Date search bar (kept intact) -->
+      <div class="recordings-search-bar">
+
+        <input
+          type="date"
+          id="recordingsDateInput"
+          class="recordings-date-input"
+          title="Filter recordings by date"
+        >
+
+        <button
+          class="recordings-search-btn"
+          id="recordingsSearchBtn"
+        >
+          Search
+        </button>
+
+        <button
+          class="recordings-reset-btn"
+          id="recordingsResetBtn"
+        >
+          Show All
+        </button>
+
+      </div>
+
+
+      <!-- Player (hidden until a recording is played) -->
+      <div class="recording-player-wrap" id="recordingPlayerWrap">
+        <video
+          id="recordingPlayer"
+          controls
+          preload="none"
+        ></video>
+      </div>
+
+
+      <!-- Recordings list -->
+      <div id="recordingsList">
+        <div class="recordings-empty">Loading recordings…</div>
+      </div>
+
+    </section>
+
+
+  </main>
+</div>
 
 
 <script>
 
+  /* =====================================================
+     BACKEND CONNECTION
+     =====================================================
 
-  /* =========================================================
-     API
-     ========================================================= */
+     If this HTML is opened from the Spring Boot server
+     on port 8000:
 
-  const API_BASE = "";
+         API_BASE = ""
 
-  let anomaliesOnly = false;
+     If this HTML is opened from Vite/another frontend
+     server:
+
+         API_BASE = "http://localhost:8000"
+  */
+
+  const API_BASE =
+          location.port === "8000"
+                  ? ""
+                  : "http://localhost:8000";
 
 
-  /* =========================================================
-     LIVE CAMERA
-     ========================================================= */
+  /* =====================================================
+     HELPERS
+     ===================================================== */
+
+  function escapeHtml(value) {
+
+    return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+  }
+
+
+  /* =====================================================
+     CAMERA
+     ===================================================== */
 
   const liveCamera =
-          document.getElementById(
-                  "liveCamera"
-          );
-
+          document.getElementById("liveCamera");
 
   const cameraStatus =
-          document.getElementById(
-                  "cameraStatus"
-          );
-
+          document.getElementById("cameraStatus");
 
   const cameraError =
-          document.getElementById(
-                  "cameraError"
-          );
+          document.getElementById("cameraError");
 
+  let cameraRequestRunning = false;
 
-  /*
-   * Browser object URL for the current JPEG.
-   */
   let currentCameraObjectUrl = null;
 
 
-  /*
-   * Prevent multiple camera requests from
-   * running at the same time.
-   */
-  let cameraRequestRunning = false;
-
-
-  /*
-   * =========================================================
-   * UPDATE LIVE CAMERA
-   * =========================================================
-   */
   async function updateLiveCamera() {
 
-    /*
-     * Do not start another request while the
-     * previous request is still running.
-     */
     if (cameraRequestRunning) {
       return;
     }
 
     cameraRequestRunning = true;
-
 
     try {
 
@@ -1452,46 +1860,10 @@
               );
 
 
-      /*
-       * =====================================================
-       * CAMERA OFFLINE
-       * =====================================================
-       */
       if (response.status === 204) {
-
-        /*
-         * Remove old image.
-         */
-        liveCamera.removeAttribute(
-                "src"
-        );
 
         liveCamera.style.display =
                 "none";
-
-
-        /*
-         * Release old browser object URL.
-         */
-        if (currentCameraObjectUrl) {
-
-          URL.revokeObjectURL(
-                  currentCameraObjectUrl
-          );
-
-          currentCameraObjectUrl = null;
-        }
-
-
-        /*
-         * Show offline state.
-         */
-        cameraStatus.textContent =
-                "● Camera offline";
-
-        cameraStatus.style.color =
-                "var(--danger)";
-
 
         cameraError.textContent =
                 "Camera is offline.";
@@ -1499,59 +1871,44 @@
         cameraError.style.display =
                 "block";
 
+        cameraStatus.textContent =
+                "● Camera offline";
+
+        cameraStatus.style.color =
+                "var(--red)";
 
         return;
       }
 
 
-      /*
-       * =====================================================
-       * HTTP ERROR
-       * =====================================================
-       */
       if (!response.ok) {
-
         throw new Error(
-                "Camera frame unavailable. HTTP "
-                + response.status
+                `Camera HTTP ${response.status}`
         );
       }
 
 
-      /*
-       * =====================================================
-       * READ JPEG
-       * =====================================================
-       */
       const blob =
               await response.blob();
 
 
-      if (!blob || blob.size === 0) {
-
+      if (!blob.size) {
         throw new Error(
-                "Camera returned an empty frame."
+                "Empty camera frame"
         );
       }
 
 
-      /*
-       * Create browser URL for JPEG.
-       */
       const imageUrl =
-              URL.createObjectURL(
-                      blob
-              );
+              URL.createObjectURL(blob);
 
 
-      /*
-       * Release previous image URL.
-       */
       if (currentCameraObjectUrl) {
 
         URL.revokeObjectURL(
                 currentCameraObjectUrl
         );
+
       }
 
 
@@ -1559,9 +1916,6 @@
               imageUrl;
 
 
-      /*
-       * Display current camera frame.
-       */
       liveCamera.src =
               imageUrl;
 
@@ -1569,64 +1923,26 @@
               "block";
 
 
-      /*
-       * Camera online.
-       */
+      cameraError.style.display =
+              "none";
+
+
       cameraStatus.textContent =
               "● Camera online";
 
       cameraStatus.style.color =
-              "var(--success)";
-
-
-      /*
-       * Hide error.
-       */
-      cameraError.style.display =
-              "none";
+              "var(--green)";
 
 
     } catch (error) {
 
       console.error(
-              "Live camera error:",
+              "Camera error:",
               error
-      );
-
-
-      /*
-       * Remove stale image.
-       */
-      liveCamera.removeAttribute(
-              "src"
       );
 
       liveCamera.style.display =
               "none";
-
-
-      /*
-       * Release old browser URL.
-       */
-      if (currentCameraObjectUrl) {
-
-        URL.revokeObjectURL(
-                currentCameraObjectUrl
-        );
-
-        currentCameraObjectUrl = null;
-      }
-
-
-      /*
-       * Camera offline.
-       */
-      cameraStatus.textContent =
-              "● Camera offline";
-
-      cameraStatus.style.color =
-              "var(--danger)";
-
 
       cameraError.textContent =
               "Camera is offline.";
@@ -1634,32 +1950,54 @@
       cameraError.style.display =
               "block";
 
+      cameraStatus.textContent =
+              "● Camera offline";
+
+      cameraStatus.style.color =
+              "var(--red)";
+
     } finally {
 
-      cameraRequestRunning = false;
+      cameraRequestRunning =
+              false;
+
     }
   }
 
 
   /*
-   * Start camera immediately.
-   */
+     Start camera.
+  */
+
   updateLiveCamera();
 
 
   /*
-   * Refresh camera approximately 5 times
-   * per second.
-   */
+     Update camera about 5 times/sec.
+  */
+
   setInterval(
           updateLiveCamera,
           200
   );
 
 
-  /* =========================================================
+  /* =====================================================
      LIVE OBJECT ACTIVITY
-     ========================================================= */
+     ===================================================== */
+
+  const activityTimes =
+          new Map();
+
+  const activityStates =
+          new Map();
+
+  const activityHistory =
+          [];
+
+  const activityHistoryKeys =
+          new Set();
+
 
   async function fetchLiveActivity() {
 
@@ -1677,8 +2015,9 @@
       if (!response.ok) {
 
         throw new Error(
-                `Activity API returned HTTP ${response.status}`
+                `Activity HTTP ${response.status}`
         );
+
       }
 
 
@@ -1694,12 +2033,379 @@
     } catch (error) {
 
       console.error(
-              "Live activity error:",
+              "Activity error:",
               error
       );
+
     }
   }
 
+
+  /* =====================================================
+     ACTIVITY TIME
+     ===================================================== */
+
+  function formatActivityTime(value) {
+
+    const date =
+            value instanceof Date
+                    ? value
+                    : new Date(value);
+
+
+    if (
+            !value ||
+            Number.isNaN(date.getTime())
+    ) {
+
+      return new Date()
+              .toLocaleTimeString(
+                      [],
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit"
+                      }
+              );
+
+    }
+
+
+    return date
+            .toLocaleTimeString(
+                    [],
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit"
+                    }
+            );
+  }
+
+
+  function getActivityTime(
+          activity,
+          key,
+          state
+  ) {
+
+    const backendTime =
+            activity.timestamp ||
+            activity.time ||
+            activity.detectedAt ||
+            activity.startTime ||
+            activity.createdAt;
+
+
+    if (backendTime) {
+
+      return formatActivityTime(
+              backendTime
+      );
+
+    }
+
+
+    if (
+            !activityTimes.has(key) ||
+            activityStates.get(key) !== state
+    ) {
+
+      activityTimes.set(
+              key,
+              Date.now()
+      );
+
+      activityStates.set(
+              key,
+              state
+      );
+
+    }
+
+
+    return formatActivityTime(
+            activityTimes.get(key)
+    );
+  }
+
+
+  /* =====================================================
+     ADD HISTORY
+     ===================================================== */
+
+  function addActivityHistory(
+          activity,
+          activityTime
+  ) {
+
+    const objectType =
+            String(
+                    activity.objectType ||
+                    "object"
+            );
+
+
+    const objectId =
+            activity.objectId ??
+            "";
+
+
+    const activityName =
+            String(
+                    activity.activity ||
+                    "Detected"
+            );
+
+
+    const anomaly =
+            activity.anomaly === true;
+
+
+    /*
+       Include the time/state so that
+       the same person can appear again
+       when their activity changes.
+    */
+
+    const key =
+            `${objectType}-${objectId}-${activityName}-${activityTime}-${anomaly}`;
+
+
+    if (
+            activityHistoryKeys.has(key)
+    ) {
+
+      return;
+
+    }
+
+
+    activityHistoryKeys.add(
+            key
+    );
+
+
+    activityHistory.unshift({
+
+      objectType,
+
+      objectId,
+
+      activityName,
+
+      activityTime,
+
+      anomaly,
+
+      confidence:
+              Number(
+                      activity.confidence || 0
+              ) * 100,
+
+      stationarySeconds:
+              Number(
+                      activity.stationarySeconds || 0
+              )
+
+    });
+
+
+    /*
+       Keep latest 50.
+    */
+
+    if (
+            activityHistory.length > 50
+    ) {
+
+      const removed =
+              activityHistory.pop();
+
+
+      if (removed) {
+
+        const removedKey =
+                `${removed.objectType}-${removed.objectId}-${removed.activityName}-${removed.activityTime}-${removed.anomaly}`;
+
+        activityHistoryKeys.delete(
+                removedKey
+        );
+
+      }
+
+    }
+
+
+    renderActivityHistory();
+  }
+
+
+  /* =====================================================
+     ACTIVITY HISTORY UI
+     ===================================================== */
+
+  function renderActivityHistory() {
+
+    const list =
+            document.getElementById(
+                    "activityHistoryList"
+            );
+
+
+    if (!list) {
+      return;
+    }
+
+
+    if (
+            activityHistory.length === 0
+    ) {
+
+      list.innerHTML = `
+            <div class="empty">
+                Activity history will appear here.
+            </div>
+        `;
+
+      return;
+    }
+
+
+    list.innerHTML =
+            activityHistory
+                    .map(item => {
+
+                      let icon = "👁️";
+
+                      const action =
+                              item.activityName
+                                      .toLowerCase();
+
+
+                      if (
+                              action.includes("walk")
+                      ) {
+                        icon = "🚶";
+                      }
+
+                      else if (
+                              action.includes("run")
+                      ) {
+                        icon = "🏃";
+                      }
+
+                      else if (
+                              action.includes("sit")
+                      ) {
+                        icon = "🪑";
+                      }
+
+                      else if (
+                              action.includes("stand")
+                      ) {
+                        icon = "🧍";
+                      }
+
+                      else if (
+                              action.includes("fall")
+                      ) {
+                        icon = "⚠️";
+                      }
+
+
+                      return `
+
+                    <article
+                        class="history-item ${
+                              item.anomaly
+                                      ? "is-anomaly"
+                                      : ""
+                      }">
+
+                        <div
+                            class="history-marker">
+                        </div>
+
+                        <div>
+
+                            <div
+                                class="history-object">
+
+                                ${escapeHtml(
+                              item.objectType
+                      )}
+
+                                #${escapeHtml(
+                              String(
+                                      item.objectId
+                              )
+                      )}
+
+                            </div>
+
+
+                            <div
+                                class="history-action">
+
+                                <span
+                                    class="history-icon">
+                                    ${icon}
+                                </span>
+
+                                ${escapeHtml(
+                              item.activityName
+                      )}
+
+                            </div>
+
+
+                            <div
+                                class="history-meta">
+
+                                Confidence:
+                                ${item.confidence.toFixed(1)}%
+
+                                ·
+
+                                Stationary:
+                                ${item.stationarySeconds}s
+
+                                ·
+
+                                ${
+                              item.anomaly
+                                      ? "⚠ ANOMALY"
+                                      : "✓ NORMAL"
+                      }
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="history-time">
+
+                            ${escapeHtml(
+                              item.activityTime
+                      )}
+
+                        </div>
+
+                    </article>
+
+                `;
+
+                    })
+                    .join("");
+
+  }
+
+
+  /* =====================================================
+     LIVE ACTIVITY UI
+     ===================================================== */
 
   function renderLiveActivity(
           activities
@@ -1717,15 +2423,15 @@
 
 
     if (
-            !activities ||
+            !Array.isArray(activities) ||
             activities.length === 0
     ) {
 
       container.innerHTML = `
-                <div class="empty">
-                    No objects detected.
-                </div>
-            `;
+            <div class="empty">
+                No objects detected.
+            </div>
+        `;
 
       return;
     }
@@ -1733,146 +2439,260 @@
 
     container.innerHTML =
             activities
-                    .map(
-                            activity => {
+                    .map(activity => {
 
-                              const objectType =
-                                      escapeHtml(
-                                              activity.objectType
-                                      );
-
-
-                              const objectId =
-                                      activity.objectId;
+                      const objectType =
+                              String(
+                                      activity.objectType ||
+                                      "object"
+                              );
 
 
-                              const activityName =
-                                      escapeHtml(
-                                              activity.activity
-                                      );
+                      const objectId =
+                              activity.objectId ??
+                              "";
 
 
-                              const confidence =
-                                      Number(
-                                              activity.confidence
-                                      ) * 100;
+                      const activityName =
+                              String(
+                                      activity.activity ||
+                                      "Detected"
+                              );
 
 
-                              const stationarySeconds =
-                                      activity.stationarySeconds;
+                      const confidenceNumber =
+                              Number(
+                                      activity.confidence
+                              );
 
 
-                              let alertHtml =
-                                      "";
+                      const confidence =
+                              Number.isFinite(
+                                      confidenceNumber
+                              )
+                                      ? confidenceNumber * 100
+                                      : 0;
 
 
-                              if (activity.anomaly) {
-
-                                alertHtml = `
-                                <div class="activity-alert">
-
-                                    ⚠
-                                    ${escapeHtml(
-                                        activity.alertMessage
-                                        ||
-                                        "Anomalous activity detected."
-                                )}
-
-                                </div>
-                            `;
-                              }
+                      const stationarySeconds =
+                              Number(
+                                      activity.stationarySeconds ||
+                                      0
+                              );
 
 
-                              return `
-
-                            <div class="activity-row">
-
-                                <div class="activity-header">
-
-                                    <div class="activity-object">
-
-                                        ${objectType}
-                                        #${objectId}
-
-                                    </div>
+                      const anomaly =
+                              activity.anomaly === true;
 
 
-                                    <div class="
-                                        activity-status
-                                        ${
-                                      activity.anomaly
-                                              ? "activity-anomaly"
-                                              : "activity-normal"
-                              }
-                                    ">
-
-                                        ${
-                                      activity.anomaly
-                                              ? "⚠ ANOMALY"
-                                              : "✓ NORMAL"
-                              }
-
-                                    </div>
-
-                                </div>
+                      const key =
+                              `${objectType}-${objectId}`;
 
 
-                                <div class="activity-info">
-
-                                    <div>
-                                        Activity:
-                                        <strong>
-                                            ${activityName}
-                                        </strong>
-                                    </div>
+                      const state =
+                              `${activityName}-${anomaly}`;
 
 
-                                    <div>
-                                        Confidence:
-                                        <strong>
-                                            ${confidence.toFixed(1)}%
-                                        </strong>
-                                    </div>
+                      const activityTime =
+                              getActivityTime(
+                                      activity,
+                                      key,
+                                      state
+                              );
 
 
-                                    <div>
-                                        Stationary:
-                                        <strong>
-                                            ${stationarySeconds}s
-                                        </strong>
-                                    </div>
+                      /*
+                         Add to history.
+                      */
 
-                                </div>
+                      addActivityHistory(
+                              activity,
+                              activityTime
+                      );
 
 
-                                ${alertHtml}
+                      let icon = "👁️";
+
+                      const lower =
+                              activityName
+                                      .toLowerCase();
+
+
+                      if (
+                              lower.includes("walk")
+                      ) {
+                        icon = "🚶";
+                      }
+
+                      else if (
+                              lower.includes("run")
+                      ) {
+                        icon = "🏃";
+                      }
+
+                      else if (
+                              lower.includes("sit")
+                      ) {
+                        icon = "🪑";
+                      }
+
+                      else if (
+                              lower.includes("stand")
+                      ) {
+                        icon = "🧍";
+                      }
+
+                      else if (
+                              lower.includes("fall")
+                      ) {
+                        icon = "⚠️";
+                      }
+
+
+                      return `
+
+                    <article
+                        class="activity-row ${
+                              anomaly
+                                      ? "is-anomaly"
+                                      : ""
+                      }">
+
+                        <div
+                            class="activity-topline">
+
+                            <div
+                                class="activity-object">
+
+                                ${escapeHtml(
+                              objectType
+                      )}
+
+                                #${escapeHtml(
+                              String(
+                                      objectId
+                              )
+                      )}
 
                             </div>
-                        `;
-                            }
-                    )
+
+
+                            <div
+                                class="activity-time">
+
+                                ${escapeHtml(
+                              activityTime
+                      )}
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="activity-action">
+
+                            <span
+                                class="activity-icon">
+                                ${icon}
+                            </span>
+
+                            <span>
+                                ${escapeHtml(
+                              activityName
+                      )}
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            class="activity-info">
+
+                            <span>
+                                Confidence:
+                                <strong>
+                                    ${confidence.toFixed(1)}%
+                                </strong>
+                            </span>
+
+                            <span>
+                                Stationary:
+                                <strong>
+                                    ${stationarySeconds}s
+                                </strong>
+                            </span>
+
+                            <span
+                                class="${
+                              anomaly
+                                      ? "activity-anomaly"
+                                      : "activity-normal"
+                      }">
+
+                                ${
+                              anomaly
+                                      ? "⚠ ANOMALY"
+                                      : "✓ NORMAL"
+                      }
+
+                            </span>
+
+                        </div>
+
+                    </article>
+
+                `;
+
+                    })
                     .join("");
+
   }
 
 
   /*
-   * Start live activity immediately.
-   */
+     Start live activity.
+  */
+
   fetchLiveActivity();
 
 
   /*
-   * Update activity once per second.
-   */
+     Update every second.
+  */
+
   setInterval(
           fetchLiveActivity,
           1000
   );
 
 
-  /* =========================================================
+  /* =====================================================
+     CLEAR HISTORY
+     ===================================================== */
+
+  document
+          .getElementById(
+                  "clearActivityHistory"
+          )
+          .addEventListener(
+                  "click",
+                  function () {
+
+                    activityHistory.length =
+                            0;
+
+                    activityHistoryKeys.clear();
+
+                    renderActivityHistory();
+
+                  }
+          );
+
+
+  /* =====================================================
      CAMERAS
-     ========================================================= */
+     ===================================================== */
 
   async function fetchCameras() {
 
@@ -1885,42 +2705,14 @@
 
 
       if (!response.ok) {
-
         throw new Error(
-                "Could not fetch cameras."
+                "Camera list failed"
         );
       }
 
 
       const cameras =
               await response.json();
-
-
-      const select =
-              document.getElementById(
-                      "cameraFilter"
-              );
-
-
-      const current =
-              select.value;
-
-
-      select.innerHTML =
-              '<option value="">All cameras</option>'
-              +
-              cameras
-                      .map(
-                              camera =>
-                                      `<option value="${escapeHtml(camera)}">
-                                ${escapeHtml(camera)}
-                            </option>`
-                      )
-                      .join("");
-
-
-      select.value =
-              current;
 
 
       document.getElementById(
@@ -1932,65 +2724,31 @@
     } catch (error) {
 
       console.error(
-              "Could not fetch cameras:",
+              "Camera list error:",
               error
       );
+
     }
   }
 
 
-  /* =========================================================
+  /* =====================================================
      EVENTS
-     ========================================================= */
+     ===================================================== */
 
   async function fetchEvents() {
-
-    const cameraId =
-            document.getElementById(
-                    "cameraFilter"
-            ).value;
-
-
-    const params =
-            new URLSearchParams();
-
-
-    params.set(
-            "limit",
-            "100"
-    );
-
-
-    if (cameraId) {
-
-      params.set(
-              "camera_id",
-              cameraId
-      );
-    }
-
-
-    if (anomaliesOnly) {
-
-      params.set(
-              "anomalies_only",
-              "true"
-      );
-    }
-
 
     try {
 
       const response =
               await fetch(
-                      `${API_BASE}/events?${params.toString()}`
+                      `${API_BASE}/events?limit=100`
               );
 
 
       if (!response.ok) {
-
         throw new Error(
-                "Could not fetch events."
+                `Events HTTP ${response.status}`
         );
       }
 
@@ -2007,35 +2765,53 @@
     } catch (error) {
 
       console.error(
-              "Could not fetch events:",
+              "Events error:",
               error
       );
 
 
       document.getElementById(
               "eventList"
-      ).innerHTML =
+      ).innerHTML = `
 
-              `<div class="empty">
-                    Could not reach CCTV AI Monitor backend.
-                    <br><br>
-                    Make sure Spring Boot is running
-                    on port 8000.
-                </div>`;
+            <div class="empty">
+
+                Could not reach CCTV AI Monitor backend.
+
+                <br><br>
+
+                Make sure Spring Boot is running
+                on port 8000.
+
+            </div>
+
+        `;
+
     }
   }
 
 
-  /* =========================================================
-     RENDER LIVE EVENTS
-     ========================================================= */
+  /* =====================================================
+     RENDER EVENTS
+     ===================================================== */
 
-  function renderEvents(events) {
+  function renderEvents(
+          events
+  ) {
 
     const list =
             document.getElementById(
                     "eventList"
             );
+
+
+    if (
+            !Array.isArray(events)
+    ) {
+
+      events = [];
+
+    }
 
 
     document.getElementById(
@@ -2045,84 +2821,97 @@
 
 
     document.getElementById(
-            "statAnomalies"
+            "statTotalTop"
     ).textContent =
+            events.length;
 
+
+    const anomalies =
             events.filter(
                     event =>
                             event.anomaly === true
             ).length;
 
 
+    document.getElementById(
+            "statAnomalies"
+    ).textContent =
+            anomalies;
+
+
+    document.getElementById(
+            "statAnomaliesTop"
+    ).textContent =
+            anomalies;
+
+
     if (
-            !events ||
             events.length === 0
     ) {
 
-      list.innerHTML =
-              `<div class="empty">
-                    No events yet.
-                </div>`;
+      list.innerHTML = `
+            <div class="empty">
+                No events yet.
+            </div>
+        `;
 
       return;
     }
 
 
     list.innerHTML =
-
             events
                     .map(
-                            event =>
-                                    renderSingleEvent(
-                                            event
-                                    )
+                            renderSingleEvent
                     )
                     .join("");
+
   }
 
 
-  /* =========================================================
-     SINGLE LIVE EVENT
-     ========================================================= */
+  /* =====================================================
+     SINGLE EVENT
+     ===================================================== */
 
-  function renderSingleEvent(event) {
+  function renderSingleEvent(
+          event
+  ) {
 
     const objectType =
-            event.objectType
-                    ? event.objectType
-                    : "Unknown";
+            event.objectType ||
+            "Unknown";
+
+
+    const objectId =
+            event.objectId !== null &&
+            event.objectId !== undefined
+                    ? `#${event.objectId}`
+                    : "";
 
 
     const cameraId =
-            event.cameraId
-                    ? event.cameraId
-                    : "Unknown camera";
+            event.cameraId ||
+            "Unknown camera";
+
+
+    const rawStart =
+            event.startTime ||
+            event.timestamp;
 
 
     const startTime =
-            event.startTime
+            rawStart
                     ? new Date(
-                            event.startTime
+                            rawStart
                     ).toLocaleString()
-
-                    : (
-
-                            event.timestamp
-                                    ? new Date(
-                                            event.timestamp
-                                    ).toLocaleString()
-
-                                    : "Unknown time"
-                    );
+                    : "Unknown time";
 
 
     const endTime =
             event.endTime
-
                     ? new Date(
                             event.endTime
                     ).toLocaleString()
-
                     : "Still active";
 
 
@@ -2131,8 +2920,7 @@
 
 
     if (
-            event.startTime
-            &&
+            event.startTime &&
             event.endTime
     ) {
 
@@ -2148,164 +2936,151 @@
               ).getTime();
 
 
-      const durationSeconds =
+      const seconds =
               Math.max(
                       0,
                       Math.round(
-                              (end - start)
-                              / 1000
+                              (end - start) / 1000
                       )
               );
 
 
       durationText =
-              `${durationSeconds} second${
-                      durationSeconds === 1
+              `${seconds} second${
+                      seconds === 1
                               ? ""
                               : "s"
               }`;
+
     }
 
 
-    const objectId =
-            event.objectId !== null
-            &&
-            event.objectId !== undefined
-
-                    ? `#${event.objectId}`
-
-                    : "";
-
-
-    const isAnomaly =
+    const anomaly =
             event.anomaly === true;
 
 
-    const similarityText =
-
-            event.similarity !== null
-            &&
-            event.similarity !== undefined
-
-                    ? ` · similarity ${event.similarity}`
-
-                    : "";
+    const description =
+            event.description ||
+            `${objectType} ${objectId} detected`;
 
 
     return `
 
-            <div class="event ${
-            isAnomaly
+        <article
+            class="event ${
+            anomaly
                     ? "anomaly"
                     : ""
     }">
 
-                <span class="badge ${
-            isAnomaly
+            <span
+                class="badge ${
+            anomaly
                     ? "anomaly"
                     : ""
     }">
 
-                    ${
-            isAnomaly
+                ${
+            anomaly
                     ? "UNUSUAL"
                     : "usual"
     }
 
-                </span>
+            </span>
 
 
-                <div class="event-body">
+            <div
+                class="event-meta">
 
-                    <div class="event-meta">
+                <strong>
+                    ${escapeHtml(
+            objectType
+    )}
 
-                        <strong>
-                            ${escapeHtml(objectType)}
-                            ${escapeHtml(objectId)}
-                        </strong>
+                    ${escapeHtml(
+            objectId
+    )}
+                </strong>
 
-                        ·
+                ·
 
-                        ${escapeHtml(cameraId)}
+                ${escapeHtml(
+            cameraId
+    )}
 
-                        ·
+                ·
 
-                        ${escapeHtml(startTime)}
-
-                    </div>
-
-
-                    <div class="event-desc">
-
-                        ${
-            escapeHtml(
-                    event.description
-                    ||
-                    `${objectType} ${objectId} detected`
-            )
-    }
-
-                        <br><br>
-
-                        <span style="
-                            color:var(--muted);
-                            font-size:12px;
-                        ">
-
-                            Start:
-                            ${escapeHtml(startTime)}
-
-                            &nbsp; | &nbsp;
-
-                            End:
-                            ${escapeHtml(endTime)}
-
-                            &nbsp; | &nbsp;
-
-                            Duration:
-                            ${escapeHtml(durationText)}
-
-                            ${escapeHtml(similarityText)}
-
-                        </span>
-
-                    </div>
-
-                </div>
+                ${escapeHtml(
+            startTime
+    )}
 
             </div>
 
-        `;
+
+            <div
+                class="event-desc">
+
+                ${escapeHtml(
+            description
+    )}
+
+            </div>
+
+
+            <div
+                class="event-details">
+
+                Start:
+                ${escapeHtml(
+            startTime
+    )}
+
+                &nbsp; | &nbsp;
+
+                End:
+                ${escapeHtml(
+            endTime
+    )}
+
+                &nbsp; | &nbsp;
+
+                Duration:
+                ${escapeHtml(
+            durationText
+    )}
+
+            </div>
+
+        </article>
+
+    `;
+
   }
 
 
-  /* =========================================================
+  /* =====================================================
      VIDEO ANALYZER
-     ========================================================= */
+     ===================================================== */
 
-  const videoFileInput =
+  const videoFile =
           document.getElementById(
                   "videoFile"
           );
-
 
   const selectedVideo =
           document.getElementById(
                   "selectedVideo"
           );
 
-
-  const analyseVideoButton =
+  const analyseButton =
           document.getElementById(
                   "analyseVideoButton"
           );
-
 
   const videoStatus =
           document.getElementById(
                   "videoStatus"
           );
-
 
   const videoResults =
           document.getElementById(
@@ -2313,46 +3088,12 @@
           );
 
 
-  const videoInformation =
-          document.getElementById(
-                  "videoInformation"
-          );
-
-
-  const videoDescriptionCard =
-          document.getElementById(
-                  "videoDescriptionCard"
-          );
-
-
-  const videoDescription =
-          document.getElementById(
-                  "videoDescription"
-          );
-
-
-  const detectedObjects =
-          document.getElementById(
-                  "detectedObjects"
-          );
-
-
-  const videoEventsTable =
-          document.getElementById(
-                  "videoEventsTable"
-          );
-
-
-  /* =========================================================
-     VIDEO FILE SELECTED
-     ========================================================= */
-
-  videoFileInput.addEventListener(
+  videoFile.addEventListener(
           "change",
           function () {
 
             const file =
-                    videoFileInput.files[0];
+                    videoFile.files[0];
 
 
             if (!file) {
@@ -2360,240 +3101,162 @@
               selectedVideo.textContent =
                       "No video selected.";
 
-
-              analyseVideoButton.disabled =
+              analyseButton.disabled =
                       true;
 
-
               return;
+
             }
 
 
-            const filename =
+            const name =
                     file.name.toLowerCase();
 
 
             const supported =
-
-                    filename.endsWith(".mp4")
-
-                    ||
-
-                    filename.endsWith(".avi")
-
-                    ||
-
-                    filename.endsWith(".mov")
-
-                    ||
-
-                    filename.endsWith(".mkv");
+                    name.endsWith(".mp4") ||
+                    name.endsWith(".avi") ||
+                    name.endsWith(".mov") ||
+                    name.endsWith(".mkv");
 
 
             if (!supported) {
 
               selectedVideo.textContent =
-                      "❌ Unsupported video format.";
+                      "Unsupported video format.";
 
-
-              analyseVideoButton.disabled =
+              analyseButton.disabled =
                       true;
 
-
               return;
+
             }
 
 
-            const sizeMB =
-                    (
-                            file.size
-                            /
-                            (1024 * 1024)
-                    ).toFixed(2);
+            selectedVideo.textContent =
+                    `Selected: ${file.name}`;
 
 
-            selectedVideo.innerHTML =
-
-                    "Selected: <strong>"
-                    +
-                    escapeHtml(
-                            file.name
-                    )
-                    +
-                    "</strong>"
-                    +
-                    " ("
-                    +
-                    sizeMB
-                    +
-                    " MB)";
-
-
-            analyseVideoButton.disabled =
+            analyseButton.disabled =
                     false;
-
-
-            videoStatus.className =
-                    "video-status";
 
 
             videoStatus.textContent =
                     "Video ready for analysis.";
 
-
-            videoResults.style.display =
-                    "none";
-
-
-            videoDescriptionCard.style.display =
-                    "none";
-
-
-            videoDescription.textContent =
-                    "";
           }
   );
 
 
-  /* =========================================================
-     ANALYSE UPLOADED VIDEO
-     ========================================================= */
+  /* =====================================================
+     ANALYZE VIDEO
+     ===================================================== */
 
-  async function analyseUploadedVideo() {
+  analyseButton.addEventListener(
+          "click",
+          async function () {
 
-    const file =
-            videoFileInput.files[0];
-
-
-    if (!file) {
-
-      alert(
-              "Please select a video first."
-      );
-
-      return;
-    }
+            const file =
+                    videoFile.files[0];
 
 
-    analyseVideoButton.disabled =
-            true;
+            if (!file) {
+              return;
+            }
 
 
-    videoStatus.className =
-            "video-status";
+            analyseButton.disabled =
+                    true;
 
 
-    videoStatus.innerHTML =
-            "⏳ Uploading video, analyzing frames, and generating the overall AI description...";
+            videoStatus.textContent =
+                    "Uploading and analyzing video...";
 
 
-    videoResults.style.display =
-            "none";
+            const formData =
+                    new FormData();
 
 
-    const formData =
-            new FormData();
+            formData.append(
+                    "file",
+                    file
+            );
 
 
-    formData.append(
-            "file",
-            file
-    );
+            try {
+
+              const response =
+                      await fetch(
+                              `${API_BASE}/video/analyse`,
+                              {
+                                method: "POST",
+                                body: formData
+                              }
+                      );
 
 
-    try {
+              const result =
+                      await response.json();
 
-      const response =
-              await fetch(
-                      "/video/analyse",
-                      {
-                        method: "POST",
-                        body: formData
-                      }
+
+              if (!response.ok) {
+
+                throw new Error(
+                        result.error ||
+                        "Video analysis failed."
+                );
+
+              }
+
+
+              displayVideoResult(
+                      result
               );
 
 
-      const result =
-              await response.json();
+              videoStatus.textContent =
+                      "✓ Video analysis completed.";
+
+              videoResults.style.display =
+                      "block";
 
 
-      if (!response.ok) {
+            } catch (error) {
 
-        throw new Error(
-                result.error
-                ||
-                "Video analysis failed."
-        );
-      }
-
-
-      videoStatus.className =
-              "video-status video-success";
-
-
-      videoStatus.innerHTML =
-              "✅ Video analysis completed.";
-
-
-      displayVideoInformation(
-              result
-      );
-
-
-      displayVideoDescription(
-              result.video_description
-      );
-
-
-      displayDetectedObjects(
-              result.detected_objects
-      );
-
-
-      displayVideoEvents(
-              result.events
-      );
-
-
-      videoResults.style.display =
-              "block";
-
-
-    } catch (error) {
-
-      console.error(
-              "Video analysis error:",
-              error
-      );
-
-
-      videoStatus.className =
-              "video-status video-error";
-
-
-      videoStatus.innerHTML =
-              "❌ "
-              +
-              escapeHtml(
-                      error.message
+              console.error(
+                      "Video error:",
+                      error
               );
 
 
-    } finally {
-
-      analyseVideoButton.disabled =
-              false;
-    }
-  }
+              videoStatus.textContent =
+                      "✗ " + error.message;
 
 
-  /* =========================================================
-     VIDEO INFORMATION
-     ========================================================= */
+            } finally {
 
-  function displayVideoInformation(
+              analyseButton.disabled =
+                      false;
+
+            }
+
+          }
+  );
+
+
+  /* =====================================================
+     DISPLAY VIDEO RESULT
+     ===================================================== */
+
+  function displayVideoResult(
           result
   ) {
+
+    const information =
+            document.getElementById(
+                    "videoInformation"
+            );
+
 
     const duration =
             formatSeconds(
@@ -2601,453 +3264,265 @@
             );
 
 
-    videoInformation.innerHTML = `
+    information.innerHTML = `
 
-            <div class="video-info-card">
+        <div class="video-info-card">
 
-                <div class="video-info-label">
-                    Filename
-                </div>
+            <div class="video-info-label">
+                Filename
+            </div>
 
-                <div class="video-info-value">
-                    ${escapeHtml(
+            <div class="video-info-value">
+                ${escapeHtml(
             result.filename
     )}
-                </div>
-
             </div>
 
+        </div>
 
-            <div class="video-info-card">
 
-                <div class="video-info-label">
-                    Duration
-                </div>
+        <div class="video-info-card">
 
-                <div class="video-info-value">
-                    ${duration}
-                </div>
-
+            <div class="video-info-label">
+                Duration
             </div>
 
+            <div class="video-info-value">
+                ${duration}
+            </div>
 
-            <div class="video-info-card">
+        </div>
 
-                <div class="video-info-label">
-                    FPS
-                </div>
 
-                <div class="video-info-value">
-                    ${Number(
-            result.fps
+        <div class="video-info-card">
+
+            <div class="video-info-label">
+                FPS
+            </div>
+
+            <div class="video-info-value">
+                ${Number(
+            result.fps || 0
     ).toFixed(2)}
-                </div>
-
             </div>
 
+        </div>
 
-            <div class="video-info-card">
 
-                <div class="video-info-label">
-                    Frames processed
-                </div>
+        <div class="video-info-card">
 
-                <div class="video-info-value">
-                    ${result.frame_count}
-                </div>
-
+            <div class="video-info-label">
+                Frames
             </div>
 
-        `;
-  }
+            <div class="video-info-value">
+                ${result.frame_count || 0}
+            </div>
+
+        </div>
+
+    `;
 
 
-  /* =========================================================
-     OVERALL AI VIDEO DESCRIPTION
-     ========================================================= */
+    const descriptionCard =
+            document.getElementById(
+                    "videoDescriptionCard"
+            );
 
-  function displayVideoDescription(
-          description
-  ) {
+
+    const description =
+            document.getElementById(
+                    "videoDescription"
+            );
+
 
     if (
-            !description
-            ||
-            String(description).trim() === ""
+            result.video_description
     ) {
 
-      videoDescription.textContent =
-              "No overall video description was generated.";
+      description.textContent =
+              result.video_description;
 
-
-      videoDescription.className =
-              "video-ai-description-empty";
-
-
-      videoDescriptionCard.style.display =
+      descriptionCard.style.display =
               "block";
 
-
-      return;
     }
 
 
-    videoDescription.textContent =
-            String(description).trim();
-
-
-    videoDescription.className =
-            "video-ai-description-text";
-
-
-    videoDescriptionCard.style.display =
-            "block";
-  }
-
-
-  /* =========================================================
-     DETECTED OBJECTS
-     ========================================================= */
-
-  function displayDetectedObjects(
-          objects
-  ) {
-
-    detectedObjects.innerHTML =
-            "";
+    const objects =
+            document.getElementById(
+                    "detectedObjects"
+            );
 
 
     if (
-            !objects
-            ||
-            objects.length === 0
+            Array.isArray(
+                    result.detected_objects
+            )
     ) {
 
-      detectedObjects.innerHTML =
+      objects.innerHTML =
+              result.detected_objects
+                      .map(
+                              object =>
+                                      `<span class="badge">
+                            ${escapeHtml(object)}
+                        </span>`
+                      )
+                      .join("");
 
-              `<div class="no-objects">
-                    No supported objects detected.
-                </div>`;
-
-      return;
     }
 
 
-    objects.forEach(
-            function (object) {
-
-              const badge =
-                      document.createElement(
-                              "span"
-                      );
+    const table =
+            document.getElementById(
+                    "videoEventsTable"
+            );
 
 
-              badge.className =
-                      "object-badge";
-
-
-              badge.textContent =
-                      object;
-
-
-              detectedObjects.appendChild(
-                      badge
-              );
-            }
-    );
-  }
-
-
-  /* =========================================================
-     VIDEO EVENT TIMELINE
-     ========================================================= */
-
-  function displayVideoEvents(
-          events
-  ) {
-
-    videoEventsTable.innerHTML =
-            "";
+    table.innerHTML = "";
 
 
     if (
-            !events
-            ||
-            events.length === 0
+            Array.isArray(result.events)
     ) {
 
-      videoEventsTable.innerHTML =
+      result.events.forEach(
+              event => {
 
-              `
-                    <tr>
-
-                        <td
-                            colspan="5"
-                            style="
-                                padding:20px;
-                                text-align:center;
-                                color:var(--muted);
-                            "
-                        >
-
-                            No tracking events detected.
-
-                        </td>
-
-                    </tr>
-                `;
+                const row =
+                        document.createElement(
+                                "tr"
+                        );
 
 
-      return;
-    }
-
-
-    events.forEach(
-            function (event) {
-
-              const row =
-                      document.createElement(
-                              "tr"
-                      );
-
-
-              row.innerHTML = `
+                row.innerHTML = `
 
                     <td>
-
-                        <span class="video-object-name">
-
-                            ${escapeHtml(
-                      event.object_type
-              )}
-
-                        </span>
-
-                    </td>
-
-
-                    <td>
-
-                        <span class="video-object-id">
-
-                            #${event.object_id}
-
-                        </span>
-
-                    </td>
-
-
-                    <td>
-
                         ${escapeHtml(
-                      event.start
-              )}
-
+                        event.object_type
+                )}
                     </td>
 
+                    <td>
+                        #${escapeHtml(
+                        String(
+                                event.object_id
+                        )
+                )}
+                    </td>
 
                     <td>
-
                         ${escapeHtml(
-                      event.end
-              )}
-
+                        event.start
+                )}
                     </td>
 
+                    <td>
+                        ${escapeHtml(
+                        event.end
+                )}
+                    </td>
 
                     <td>
-
                         ${Number(
-                      event.duration_seconds
-              ).toFixed(2)}
-
+                        event.duration_seconds || 0
+                ).toFixed(2)}
                         sec
-
                     </td>
 
                 `;
 
 
-              videoEventsTable.appendChild(
-                      row
-              );
-            }
-    );
+                table.appendChild(
+                        row
+                );
+
+              }
+      );
+
+    }
+
   }
 
 
-  /* =========================================================
-     FORMAT VIDEO SECONDS
-     ========================================================= */
+  /* =====================================================
+     FORMAT SECONDS
+     ===================================================== */
 
   function formatSeconds(
           seconds
   ) {
 
+    const value =
+            Number(seconds);
+
+
     if (
-            !Number.isFinite(
-                    Number(seconds)
-            )
+            !Number.isFinite(value)
     ) {
 
       return "00:00:00";
+
     }
 
 
-    const totalSeconds =
-            Math.floor(
-                    Number(seconds)
-            );
+    const total =
+            Math.floor(value);
 
 
     const hours =
             Math.floor(
-                    totalSeconds / 3600
+                    total / 3600
             );
 
 
     const minutes =
             Math.floor(
-                    (totalSeconds % 3600)
-                    / 60
+                    (total % 3600) / 60
             );
 
 
     const secs =
-            totalSeconds % 60;
+            total % 60;
 
 
     return String(hours)
                     .padStart(2, "0")
-
             +
-
-            ":"
-
-            +
-
+            ":" +
             String(minutes)
                     .padStart(2, "0")
-
             +
-
-            ":"
-
-            +
-
+            ":" +
             String(secs)
                     .padStart(2, "0");
+
   }
 
 
-  /* =========================================================
-     HTML ESCAPE
-     ========================================================= */
+  /* =====================================================
+     REFRESH EVERYTHING
+     ===================================================== */
 
-  function escapeHtml(
-          value
-  ) {
+  function refreshAll() {
 
-    return String(
-            value ?? ""
-    )
+    updateLiveCamera();
 
-            .replaceAll(
-                    "&",
-                    "&amp;"
-            )
+    fetchLiveActivity();
 
-            .replaceAll(
-                    "<",
-                    "&lt;"
-            )
+    fetchCameras();
 
-            .replaceAll(
-                    ">",
-                    "&gt;"
-            )
+    fetchEvents();
 
-            .replaceAll(
-                    '"',
-                    "&quot;"
-            )
+    loadAllRecordings();
 
-            .replaceAll(
-                    "'",
-                    "&#039;"
-            );
   }
 
 
-  /* =========================================================
-     BUTTONS
-     ========================================================= */
-
-  document
-          .getElementById(
-                  "refreshBtn"
-          )
-          .addEventListener(
-                  "click",
-                  function () {
-
-                    fetchCameras();
-
-                    fetchEvents();
-
-                    fetchLiveActivity();
-
-                    updateLiveCamera();
-                  }
-          );
-
-
-  document
-          .getElementById(
-                  "cameraFilter"
-          )
-          .addEventListener(
-                  "change",
-                  fetchEvents
-          );
-
-
-  document
-          .getElementById(
-                  "anomalyToggle"
-          )
-          .addEventListener(
-                  "click",
-                  function () {
-
-                    anomaliesOnly =
-                            !anomaliesOnly;
-
-
-                    this.textContent =
-                            anomaliesOnly
-                                    ? "Show all"
-                                    : "Anomalies only";
-
-
-                    fetchEvents();
-                  }
-          );
-
-
-  /* =========================================================
-     VIDEO ANALYZER BUTTON
-     ========================================================= */
-
-  analyseVideoButton.addEventListener(
-          "click",
-          analyseUploadedVideo
-  );
-
-
-  /* =========================================================
+  /* =====================================================
      INITIAL LOAD
-     ========================================================= */
+     ===================================================== */
 
   fetchCameras();
 
@@ -3057,8 +3532,10 @@
 
 
   /*
-   * Refresh camera/event information every 5 seconds.
-   */
+     Refresh events/camera count
+     every 5 seconds.
+  */
+
   setInterval(
           function () {
 
@@ -3070,9 +3547,185 @@
           5000
   );
 
+
+  /* =====================================================
+     RECORDINGS
+     ===================================================== */
+
+  const recordingsList   = document.getElementById("recordingsList");
+  const recordingPlayer  = document.getElementById("recordingPlayer");
+  const playerWrap       = document.getElementById("recordingPlayerWrap");
+  const dateInput        = document.getElementById("recordingsDateInput");
+  const searchBtn        = document.getElementById("recordingsSearchBtn");
+  const resetBtn         = document.getElementById("recordingsResetBtn");
+  const totalBadge       = document.getElementById("recordingsTotalBadge");
+
+
+  function renderRecordings(recordings) {
+
+    totalBadge.textContent = recordings.length;
+
+    if (recordings.length === 0) {
+      recordingsList.innerHTML =
+        '<div class="recordings-empty">No recordings found.</div>';
+      return;
+    }
+
+    /* Group by date */
+    const groups = {};
+
+    recordings.forEach(r => {
+      const d = r.date || "Unknown date";
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(r);
+    });
+
+    const html = Object.entries(groups).map(([date, recs]) => {
+
+      const rows = recs.map((r, idx) => {
+
+        const sizeMB =
+          r.size > 0
+            ? (r.size / 1048576).toFixed(2) + " MB"
+            : "";
+
+        const safeUrl  = escapeHtml(API_BASE + r.url);
+        const safeName = escapeHtml(r.filename);
+
+        return `
+          <div class="recording-row">
+            <span class="recording-icon">🎬</span>
+            <span class="recording-name">${safeName}</span>
+            <span class="recording-size">${sizeMB}</span>
+            <div class="recording-actions">
+              <button
+                class="recording-btn play"
+                onclick="playRecording('${safeUrl}', this)"
+              >▶ Play</button>
+              <a
+                href="${safeUrl}"
+                download="${safeName}"
+                style="text-decoration:none"
+              >
+                <button class="recording-btn">⬇ Download</button>
+              </a>
+            </div>
+          </div>`;
+      }).join("");
+
+      return `
+        <div class="recordings-date-group">
+          <div class="recordings-date-label">${escapeHtml(date)}</div>
+          ${rows}
+        </div>`;
+
+    }).join("");
+
+    recordingsList.innerHTML = html;
+  }
+
+
+  function playRecording(url, btn) {
+
+    playerWrap.style.display = "block";
+    recordingPlayer.src = url;
+    recordingPlayer.play().catch(() => {});
+    playerWrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+
+  async function loadAllRecordings() {
+
+    try {
+
+      const response =
+        await fetch(`${API_BASE}/recordings/all`, { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const recordings = await response.json();
+
+      renderRecordings(recordings);
+
+    } catch (err) {
+
+      console.error("Recordings error:", err);
+
+      recordingsList.innerHTML =
+        '<div class="recordings-empty">Could not load recordings.</div>';
+
+      totalBadge.textContent = "0";
+    }
+  }
+
+
+  async function searchRecordingsByDate(date) {
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_BASE}/recordings?date=${encodeURIComponent(date)}`,
+          { cache: "no-store" }
+        );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const recordings = await response.json();
+
+      /* Attach date so renderRecordings can group them */
+      recordings.forEach(r => { r.date = r.date || date; });
+
+      renderRecordings(recordings);
+
+    } catch (err) {
+
+      console.error("Recordings search error:", err);
+
+      recordingsList.innerHTML =
+        '<div class="recordings-empty">Could not search recordings.</div>';
+
+      totalBadge.textContent = "0";
+    }
+  }
+
+
+  /* Wire up buttons */
+
+  searchBtn.addEventListener("click", function () {
+
+    const date = dateInput.value;
+
+    if (!date) {
+      alert("Please select a date first.");
+      return;
+    }
+
+    /* Collapse the player when searching */
+    playerWrap.style.display = "none";
+    recordingPlayer.src = "";
+
+    searchRecordingsByDate(date);
+  });
+
+
+  resetBtn.addEventListener("click", function () {
+
+    dateInput.value = "";
+    playerWrap.style.display = "none";
+    recordingPlayer.src = "";
+    loadAllRecordings();
+  });
+
+
+  /* Load all recordings on page start */
+  loadAllRecordings();
+
 </script>
 
-
 </body>
-
 </html>

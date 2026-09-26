@@ -16,8 +16,10 @@ import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.opencv.global.opencv_imgcodecs;
 import org.bytedeco.opencv.global.opencv_imgproc;
 import org.bytedeco.opencv.opencv_core.Mat;
+import org.bytedeco.opencv.opencv_core.Point;
 import org.bytedeco.opencv.opencv_core.Rect;
 import org.bytedeco.opencv.opencv_core.Scalar;
+import org.bytedeco.opencv.opencv_core.Size;
 
 import org.springframework.stereotype.Service;
 
@@ -79,6 +81,17 @@ public class CameraProcessingService {
 
 
     private Thread processingThread;
+
+
+    /*
+     * Number of consecutive empty frames.
+     * After RECONNECT_AFTER_EMPTY_FRAMES consecutive empties
+     * the camera is automatically reconnected.
+     */
+
+    private int emptyFrameCount = 0;
+
+    private static final int RECONNECT_AFTER_EMPTY_FRAMES = 30;
 
 
     /*
@@ -234,12 +247,44 @@ public class CameraProcessingService {
                                 frame.empty()
                 ) {
 
+                    emptyFrameCount++;
+
                     handleCameraOffline();
 
-                    sleep(200);
+
+                    /*
+                     * After 30 consecutive empty frames (~6 seconds),
+                     * try to reopen the camera.
+                     */
+
+                    if (emptyFrameCount >= RECONNECT_AFTER_EMPTY_FRAMES) {
+
+                        emptyFrameCount = 0;
+
+                        System.out.println(
+                                "Camera has returned no frames for "
+                                + RECONNECT_AFTER_EMPTY_FRAMES
+                                + " consecutive reads. Reconnecting..."
+                        );
+
+                        cameraSource.reconnect();
+
+                        sleep(2000);
+
+                    } else {
+
+                        sleep(200);
+                    }
 
                     continue;
                 }
+
+
+                /*
+                 * Camera is back — reset counter.
+                 */
+
+                emptyFrameCount = 0;
 
 
                 /*
@@ -917,35 +962,104 @@ public class CameraProcessingService {
 
 
     /*
-     * DRAW BOUNDING BOXES
-     * IMPORTANT:
-     * The browser video should show ONLY bounding boxes.
-     * No:
-     * person #1
-     * 92%
-     * text is drawn on the image.
+     * ============================================================
+     * DRAW BOUNDING BOXES + LABELS
+     * ============================================================
+     *
+     * Draws a green bounding box with a label like:
+     *
+     *   person #6  75%
+     *
+     * displayed above the box, matching the screenshot style.
      */
     private void drawTrackedObjects(
             Mat frame,
             List<TrackedObject> objects
     ) {
-        for (
-                TrackedObject object
-                : objects
-        ) {
 
-            Rect box =
-                    object.getBoundingBox();
+        /*
+         * Green colour — matches screenshot exactly.
+         */
+        final Scalar GREEN  = new Scalar(0, 255, 0, 0);
+        final Scalar BLACK  = new Scalar(0,   0, 0, 0);
+
+        final int FONT      = opencv_imgproc.FONT_HERSHEY_SIMPLEX;
+        final double FONT_SCALE = 0.65;
+        final int THICKNESS = 2;
+        final int BOX_THICKNESS = 2;
+
+
+        for (TrackedObject object : objects) {
+
+            Rect box = object.getBoundingBox();
+
+
+            /*
+             * Build label string: "person #6  75%"
+             */
+            String label =
+                    object.getLabel()
+                    + " #" + object.getId()
+                    + "  "
+                    + Math.round(object.getConfidence() * 100)
+                    + "%";
+
+
+            /*
+             * Measure label so we can draw a background rect.
+             */
+            int[] baseLine = {0};
+            Size textSize = opencv_imgproc.getTextSize(
+                    label, FONT, FONT_SCALE, THICKNESS, baseLine
+            );
+
+
+            /*
+             * Text origin: just above the top-left corner of the box.
+             * Keep it inside the frame.
+             */
+            int textX = box.x();
+            int textY = Math.max(box.y() - 8, textSize.height() + 4);
+
+
+            /*
+             * Dark background pill behind the text.
+             */
+            opencv_imgproc.rectangle(
+                    frame,
+                    new Point(textX - 2, textY - textSize.height() - 4),
+                    new Point(textX + textSize.width() + 2, textY + baseLine[0]),
+                    BLACK,
+                    opencv_imgproc.FILLED,
+                    opencv_imgproc.LINE_8,
+                    0
+            );
+
+
+            /*
+             * Draw label text in green.
+             */
+            opencv_imgproc.putText(
+                    frame,
+                    label,
+                    new Point(textX, textY),
+                    FONT,
+                    FONT_SCALE,
+                    GREEN,
+                    THICKNESS,
+                    opencv_imgproc.LINE_AA,
+                    false
+            );
+
+
+            /*
+             * Draw the bounding box.
+             */
             opencv_imgproc.rectangle(
                     frame,
                     box,
-                    new Scalar(
-                            0,
-                            255,
-                            0,
-                            0
-                    ),
-                    2,
+                    GREEN,
+                    BOX_THICKNESS,
                     opencv_imgproc.LINE_8,
                     0
             );

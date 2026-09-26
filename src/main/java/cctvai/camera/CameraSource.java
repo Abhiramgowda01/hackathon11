@@ -13,12 +13,29 @@ public class CameraSource {
 
     private VideoCapture videoCapture;
 
+
     public CameraSource(CameraConfig cameraConfig) {
         this.cameraConfig = cameraConfig;
     }
 
+
     @PostConstruct
     public void start() {
+
+        if (!openCamera()) {
+            throw new IllegalStateException(
+                    "Could not open camera at startup."
+            );
+        }
+    }
+
+
+    /*
+     * Open / re-open the camera source.
+     * Called both at startup and during reconnection.
+     * Returns true on success.
+     */
+    private synchronized boolean openCamera() {
 
         String cameraType = cameraConfig.getCameraType();
 
@@ -27,89 +44,84 @@ public class CameraSource {
         System.out.println("==========================================");
         System.out.println("Camera type: " + cameraType);
 
+        /*
+         * Release existing capture handle if present.
+         */
+        if (videoCapture != null) {
+            try {
+                videoCapture.release();
+                videoCapture.close();
+            } catch (Exception ignored) {
+            }
+            videoCapture = null;
+        }
+
         videoCapture = new VideoCapture();
 
         boolean opened;
 
         switch (cameraType.toUpperCase()) {
+
             case "A":
                 int webcamIndex = cameraConfig.getWebcamIndex();
                 System.out.println(
-                        "Opening laptop/USB webcam. Index: "
-                                + webcamIndex
+                        "Opening laptop/USB webcam. Index: " + webcamIndex
                 );
                 opened = videoCapture.open(webcamIndex);
                 break;
 
             case "B":
-
                 String rtspUrl = cameraConfig.getRtspUrl();
-
                 if (rtspUrl == null || rtspUrl.isBlank()) {
-
                     throw new IllegalStateException(
                             "Camera type B selected, but camera.rtsp-url is empty."
                     );
                 }
-
-                System.out.println("Opening RTSP camera...");
-                System.out.println("RTSP URL: " + rtspUrl);
-                System.out.println("Using FFmpeg backend for RTSP...");
-
+                System.out.println("Opening RTSP camera: " + rtspUrl);
                 opened = videoCapture.open(
                         rtspUrl,
                         org.bytedeco.opencv.global.opencv_videoio.CAP_FFMPEG
                 );
-
                 break;
 
             case "C":
-
                 String videoFile = cameraConfig.getVideoFile();
-
                 if (videoFile == null || videoFile.isBlank()) {
-
                     throw new IllegalStateException(
                             "Camera type C selected, but camera.video-file is empty."
                     );
                 }
-
-                System.out.println("Opening recorded CCTV video...");
-                System.out.println("Video file: " + videoFile);
-
+                System.out.println("Opening recorded video: " + videoFile);
                 opened = videoCapture.open(videoFile);
-
                 break;
 
             default:
-
                 throw new IllegalArgumentException(
-                        "Invalid camera.type: "
-                                + cameraType
-                                + ". Use A, B or C."
+                        "Invalid camera.type: " + cameraType + ". Use A, B or C."
                 );
         }
 
         if (!opened || !videoCapture.isOpened()) {
-
-            throw new IllegalStateException(
-                    "Could not open camera source. "
-                            + "Camera type: "
-                            + cameraType
+            System.err.println(
+                    "Could not open camera source. Camera type: " + cameraType
             );
+            return false;
         }
 
         System.out.println("Camera opened successfully.");
         System.out.println("==========================================");
+        return true;
     }
 
+
+    /*
+     * Read one frame.
+     * Returns null if the camera is closed or returned an empty Mat.
+     */
     public synchronized Mat readFrame() {
 
         if (videoCapture == null || !videoCapture.isOpened()) {
-
-            throw new IllegalStateException(
-                    "Camera source is not open."
-            );
+            return null;
         }
 
         Mat frame = new Mat();
@@ -117,9 +129,7 @@ public class CameraSource {
         boolean success = videoCapture.read(frame);
 
         if (!success || frame.empty()) {
-
             frame.close();
-
             return null;
         }
 
@@ -127,11 +137,23 @@ public class CameraSource {
     }
 
 
-    public boolean isOpened() {
+    /*
+     * Try to reconnect the camera source after losing frames.
+     * Called by CameraProcessingService after consecutive empty frames.
+     * Returns true if the camera was successfully reopened.
+     */
+    public boolean reconnect() {
 
-        return videoCapture != null
-                && videoCapture.isOpened();
+        System.out.println("Attempting camera reconnection...");
+
+        return openCamera();
     }
+
+
+    public boolean isOpened() {
+        return videoCapture != null && videoCapture.isOpened();
+    }
+
 
     @PreDestroy
     public void stop() {
@@ -149,6 +171,3 @@ public class CameraSource {
         }
     }
 }
-
-
-

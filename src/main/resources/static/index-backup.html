@@ -2,7 +2,12 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>CCTV AI Monitor</title>
 
     <style>
@@ -18,240 +23,1009 @@
             --success: #39d98a;
         }
 
+
         * {
             box-sizing: border-box;
         }
 
+
         body {
             margin: 0;
-            font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+
+            font-family:
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Arial,
+                    sans-serif;
+
             background: var(--bg);
+
             color: var(--text);
         }
 
+
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
         header {
+
             padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
+
+            border-bottom:
+                    1px solid var(--border);
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
+
+            gap: 15px;
         }
 
+
         header h1 {
+
             font-size: 18px;
+
             margin: 0;
         }
 
+
         header .controls {
+
             display: flex;
+
             gap: 8px;
+
             align-items: center;
+
+            flex-wrap: wrap;
         }
+
 
         select,
         button {
+
             background: var(--panel);
+
             color: var(--text);
-            border: 1px solid var(--border);
+
+            border:
+                    1px solid var(--border);
+
             padding: 8px 12px;
+
             border-radius: 6px;
+
             font-size: 14px;
+
             cursor: pointer;
         }
 
-        button.primary {
-            background: var(--accent);
-            border-color: var(--accent);
+
+        button:hover {
+
+            border-color:
+                    var(--accent);
         }
 
+
+        button:disabled {
+
+            opacity: 0.5;
+
+            cursor: not-allowed;
+        }
+
+
+        button.primary {
+
+            background:
+                    var(--accent);
+
+            border-color:
+                    var(--accent);
+
+            color: white;
+        }
+
+
+        button.primary:hover {
+
+            opacity: 0.9;
+        }
+
+
         main {
+
             padding: 20px 24px;
+
             max-width: 1100px;
+
             margin: 0 auto;
         }
 
-        /* =========================
+
+        /* =====================================================
            LIVE CAMERA
-           ========================= */
+           ===================================================== */
 
         .camera-panel {
+
             background: var(--panel);
-            border: 1px solid var(--border);
+
+            border:
+                    1px solid var(--border);
+
             border-radius: 10px;
+
             padding: 16px;
+
             margin-bottom: 16px;
         }
 
+
         .camera-header {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             margin-bottom: 12px;
         }
 
+
         .camera-title {
+
             font-size: 15px;
+
             font-weight: 600;
         }
 
+
         .camera-status {
+
             font-size: 12px;
-            color: var(--success);
+
+            color:
+                    var(--success);
         }
 
+
         .camera-container {
+
             width: 100%;
+
             background: #000;
+
             border-radius: 8px;
+
             overflow: hidden;
+
             display: flex;
+
             justify-content: center;
+
             align-items: center;
+
             min-height: 400px;
         }
 
+
         #liveCamera {
+
             display: block;
+
             width: 100%;
+
             height: auto;
+
             max-height: 650px;
+
             object-fit: contain;
+
             background: #000;
         }
 
+
         .camera-error {
+
             color: var(--muted);
+
             text-align: center;
+
             padding: 60px 20px;
         }
 
-        /* =========================
-           STATISTICS
-           ========================= */
 
-        .stats {
-            display: flex;
-            gap: 12px;
+        /* =====================================================
+           LIVE OBJECT ACTIVITY
+           ===================================================== */
+
+        .activity-panel {
+
+            background: var(--panel);
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 10px;
+
+            padding: 16px;
+
             margin-bottom: 16px;
         }
 
-        .stat {
-            flex: 1;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px 16px;
-        }
 
-        .stat .label {
-            color: var(--muted);
-            font-size: 12px;
-            text-transform: uppercase;
-        }
+        .activity-title {
 
-        .stat .value {
-            font-size: 24px;
+            font-size: 16px;
+
             font-weight: 600;
-            margin-top: 4px;
+
+            margin-bottom: 14px;
         }
 
-        /* =========================
-           EVENTS
-           ========================= */
 
-        .event {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px 16px;
+        .activity-row {
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 8px;
+
+            padding: 12px;
+
             margin-bottom: 10px;
+
+            background: #12161b;
+        }
+
+
+        .activity-row:last-child {
+
+            margin-bottom: 0;
+        }
+
+
+        .activity-header {
+
             display: flex;
-            gap: 12px;
-            align-items: flex-start;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-bottom: 8px;
         }
 
-        .event.anomaly {
-            border-color: var(--danger);
-            background: #241419;
+
+        .activity-object {
+
+            font-weight: 600;
+
+            font-size: 15px;
         }
 
-        .badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 20px;
-            white-space: nowrap;
-            background: #263047;
-            color: var(--accent);
+
+        .activity-status {
+
+            font-size: 12px;
+
+            font-weight: 600;
         }
 
-        .badge.anomaly {
-            background: #3a1420;
+
+        .activity-normal {
+
+            color: var(--success);
+        }
+
+
+        .activity-anomaly {
+
             color: var(--danger);
         }
 
+
+        .activity-info {
+
+            display: grid;
+
+            grid-template-columns:
+                    repeat(3, 1fr);
+
+            gap: 8px;
+
+            color: var(--muted);
+
+            font-size: 13px;
+        }
+
+
+        .activity-info strong {
+
+            color: var(--text);
+        }
+
+
+        .activity-alert {
+
+            margin-top: 10px;
+
+            padding: 9px 10px;
+
+            border-radius: 6px;
+
+            background: #241419;
+
+            border:
+                    1px solid var(--danger);
+
+            color: var(--danger);
+
+            font-size: 13px;
+
+            font-weight: 600;
+        }
+
+
+        /* =====================================================
+           STATISTICS
+           ===================================================== */
+
+        .stats {
+
+            display: flex;
+
+            gap: 12px;
+
+            margin-bottom: 16px;
+        }
+
+
+        .stat {
+
+            flex: 1;
+
+            background: var(--panel);
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 10px;
+
+            padding: 14px 16px;
+        }
+
+
+        .stat .label {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            text-transform: uppercase;
+        }
+
+
+        .stat .value {
+
+            font-size: 24px;
+
+            font-weight: 600;
+
+            margin-top: 4px;
+        }
+
+
+        /* =====================================================
+           EVENTS
+           ===================================================== */
+
+        .event {
+
+            background: var(--panel);
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 10px;
+
+            padding: 14px 16px;
+
+            margin-bottom: 10px;
+
+            display: flex;
+
+            gap: 12px;
+
+            align-items: flex-start;
+        }
+
+
+        .event.anomaly {
+
+            border-color:
+                    var(--danger);
+
+            background: #241419;
+        }
+
+
+        .badge {
+
+            font-size: 11px;
+
+            padding: 3px 8px;
+
+            border-radius: 20px;
+
+            white-space: nowrap;
+
+            background: #263047;
+
+            color: var(--accent);
+        }
+
+
+        .badge.anomaly {
+
+            background: #3a1420;
+
+            color: var(--danger);
+        }
+
+
         .event-body {
+
             flex: 1;
         }
 
+
         .event-meta {
+
             color: var(--muted);
+
             font-size: 12px;
+
             margin-bottom: 4px;
         }
 
+
         .event-desc {
+
             font-size: 14px;
+
             line-height: 1.4;
         }
 
+
         .empty {
+
             color: var(--muted);
+
             text-align: center;
+
             padding: 40px 0;
         }
+
+
+        /* =====================================================
+           VIDEO ANALYZER
+           ===================================================== */
+
+        .video-panel {
+
+            background: var(--panel);
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 10px;
+
+            padding: 20px;
+
+            margin-top: 20px;
+        }
+
+
+        .video-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+
+            margin-bottom: 15px;
+        }
+
+
+        .video-title {
+
+            font-size: 18px;
+
+            font-weight: 600;
+        }
+
+
+        .video-description {
+
+            color: var(--muted);
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            margin-bottom: 20px;
+        }
+
+
+        .upload-area {
+
+            border:
+                    2px dashed var(--border);
+
+            border-radius: 10px;
+
+            padding: 25px;
+
+            text-align: center;
+
+            background: #12161b;
+        }
+
+
+        .upload-area:hover {
+
+            border-color:
+                    var(--accent);
+        }
+
+
+        #videoFile {
+
+            width: 100%;
+
+            max-width: 500px;
+
+            padding: 10px;
+
+            color: var(--text);
+
+            background: var(--panel);
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 6px;
+        }
+
+
+        .selected-video {
+
+            margin-top: 15px;
+
+            color: var(--muted);
+
+            font-size: 14px;
+        }
+
+
+        .video-actions {
+
+            margin-top: 18px;
+
+            display: flex;
+
+            justify-content: center;
+
+            gap: 10px;
+
+            flex-wrap: wrap;
+        }
+
+
+        #analyseVideoButton {
+
+            background:
+                    var(--accent);
+
+            border-color:
+                    var(--accent);
+
+            color: white;
+
+            font-weight: 600;
+
+            padding:
+                    10px 20px;
+        }
+
+
+        .video-status {
+
+            margin-top: 20px;
+
+            padding: 14px;
+
+            border-radius: 8px;
+
+            background: #12161b;
+
+            border:
+                    1px solid var(--border);
+
+            color: var(--muted);
+
+            text-align: center;
+        }
+
+
+        .video-results {
+
+            display: none;
+
+            margin-top: 25px;
+        }
+
+
+        .video-info {
+
+            display: grid;
+
+            grid-template-columns:
+                    repeat(4, 1fr);
+
+            gap: 10px;
+
+            margin-top: 15px;
+        }
+
+
+        .video-info-card {
+
+            background: #12161b;
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 8px;
+
+            padding: 12px;
+        }
+
+
+        .video-info-label {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+        }
+
+
+        .video-info-value {
+
+            margin-top: 5px;
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            word-break: break-word;
+        }
+
+
+        .detected-objects {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            margin-top: 15px;
+        }
+
+
+        .object-badge {
+
+            display: inline-block;
+
+            padding: 7px 12px;
+
+            border-radius: 20px;
+
+            background: #263047;
+
+            color: var(--accent);
+
+            border:
+                    1px solid #34415e;
+
+            font-size: 13px;
+
+            font-weight: 600;
+        }
+
+
+        .no-objects {
+
+            color: var(--muted);
+
+            padding: 10px 0;
+        }
+
+
+        .timeline-wrapper {
+
+            width: 100%;
+
+            overflow-x: auto;
+
+            margin-top: 15px;
+        }
+
+
+        .timeline-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 650px;
+        }
+
+
+        .timeline-table th {
+
+            background: #12161b;
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            text-transform: uppercase;
+
+            text-align: left;
+
+            padding: 12px;
+
+            border:
+                    1px solid var(--border);
+        }
+
+
+        .timeline-table td {
+
+            padding: 12px;
+
+            border:
+                    1px solid var(--border);
+
+            font-size: 13px;
+        }
+
+
+        .timeline-table tr:hover {
+
+            background: #1c2128;
+        }
+
+
+        .video-object-name {
+
+            font-weight: 600;
+
+            color: var(--text);
+        }
+
+
+        .video-object-id {
+
+            color: var(--accent);
+
+            font-weight: 600;
+        }
+
+
+        .video-error {
+
+            color: var(--danger);
+
+            background: #241419;
+
+            border:
+                    1px solid var(--danger);
+        }
+
+
+        .video-success {
+
+            color: var(--success);
+
+            border-color:
+                    var(--success);
+        }
+
+
+        /* =====================================================
+           AI VIDEO DESCRIPTION
+           ===================================================== */
+
+        .video-ai-description {
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            background: #12161b;
+
+            border:
+                    1px solid var(--border);
+
+            border-radius: 10px;
+        }
+
+
+        .video-ai-description-header {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-bottom: 12px;
+
+            font-size: 18px;
+
+            font-weight: 600;
+        }
+
+
+        .video-ai-description-icon {
+
+            font-size: 21px;
+        }
+
+
+        .video-ai-description-text {
+
+            color: var(--text);
+
+            font-size: 14px;
+
+            line-height: 1.8;
+
+            white-space: pre-wrap;
+        }
+
+
+        .video-ai-description-empty {
+
+            color: var(--muted);
+
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
 
         @media (max-width: 700px) {
 
             header {
+
                 flex-direction: column;
-                gap: 12px;
+
                 align-items: flex-start;
             }
 
+
             header .controls {
+
                 width: 100%;
+
                 flex-wrap: wrap;
             }
 
+
             .stats {
+
                 flex-direction: column;
             }
 
+
             .camera-container {
+
                 min-height: 250px;
+            }
+
+
+            .video-info {
+
+                grid-template-columns:
+                        repeat(2, 1fr);
+            }
+
+
+            .activity-info {
+
+                grid-template-columns:
+                        1fr;
+            }
+        }
+
+
+        @media (max-width: 450px) {
+
+            main {
+
+                padding: 12px;
+            }
+
+
+            .video-info {
+
+                grid-template-columns:
+                        1fr;
             }
         }
 
     </style>
+
 </head>
+
 
 <body>
 
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+
 <header>
 
-    <h1>🎥 CCTV AI Monitor</h1>
+    <h1>
+        🎥 CCTV AI Monitor
+    </h1>
+
 
     <div class="controls">
 
         <select id="cameraFilter">
-            <option value="">All cameras</option>
+
+            <option value="">
+                All cameras
+            </option>
+
         </select>
+
 
         <button id="anomalyToggle">
             Show all
         </button>
 
-        <button class="primary" id="refreshBtn">
+
+        <button
+                class="primary"
+                id="refreshBtn"
+        >
             Refresh
         </button>
 
@@ -262,9 +1036,10 @@
 
 <main>
 
-    <!-- =========================
+
+    <!-- =====================================================
          LIVE CAMERA
-         ========================= -->
+         ===================================================== -->
 
     <section class="camera-panel">
 
@@ -274,28 +1049,31 @@
                 📹 Live AI Camera
             </div>
 
+
             <div
                     class="camera-status"
-                    id="cameraStatus">
+                    id="cameraStatus"
+            >
                 ● Connecting...
             </div>
 
         </div>
+
 
         <div class="camera-container">
 
             <img
                     id="liveCamera"
                     alt="Live CCTV camera"
+                    style="display:none;"
             >
+
 
             <div
                     id="cameraError"
                     class="camera-error"
-                    style="display: none;">
-
-                Camera frame is not available.
-
+            >
+                Camera is offline.
             </div>
 
         </div>
@@ -303,11 +1081,34 @@
     </section>
 
 
-    <!-- =========================
+    <!-- =====================================================
+         LIVE OBJECT ACTIVITY
+         ===================================================== -->
+
+    <section class="activity-panel">
+
+        <div class="activity-title">
+            🎯 Live Object Activity
+        </div>
+
+
+        <div id="liveActivityList">
+
+            <div class="empty">
+                Waiting for detected objects...
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
          STATISTICS
-         ========================= -->
+         ===================================================== -->
 
     <div class="stats">
+
 
         <div class="stat">
 
@@ -317,7 +1118,8 @@
 
             <div
                     class="value"
-                    id="statTotal">
+                    id="statTotal"
+            >
                 0
             </div>
 
@@ -332,7 +1134,8 @@
 
             <div
                     class="value"
-                    id="statAnomalies">
+                    id="statAnomalies"
+            >
                 0
             </div>
 
@@ -347,7 +1150,8 @@
 
             <div
                     class="value"
-                    id="statCameras">
+                    id="statCameras"
+            >
                 0
             </div>
 
@@ -356,152 +1160,788 @@
     </div>
 
 
-    <!-- =========================
-         EVENTS
-         ========================= -->
+    <!-- =====================================================
+         LIVE EVENTS
+         ===================================================== -->
 
     <div id="eventList"></div>
+
+
+    <!-- =====================================================
+         VIDEO ANALYZER
+         ===================================================== -->
+
+    <section
+            class="video-panel"
+            id="videoAnalyzer"
+    >
+
+
+        <div class="video-header">
+
+            <div class="video-title">
+                🎞️ Video Analyzer
+            </div>
+
+        </div>
+
+
+        <div class="video-description">
+
+            Upload a recorded CCTV video
+            and let the AI analyze it
+            frame by frame.
+
+            <br><br>
+
+            Supported formats:
+
+            <strong>
+                MP4, AVI, MOV, MKV
+            </strong>
+
+        </div>
+
+
+        <!-- =================================================
+             UPLOAD AREA
+             ================================================= -->
+
+        <div class="upload-area">
+
+
+            <input
+                    type="file"
+                    id="videoFile"
+                    accept=".mp4,.avi,.mov,.mkv,video/mp4,video/x-msvideo,video/quicktime"
+            >
+
+
+            <div
+                    class="selected-video"
+                    id="selectedVideo"
+            >
+                No video selected.
+            </div>
+
+
+            <div class="video-actions">
+
+                <button
+                        id="analyseVideoButton"
+                        disabled
+                >
+                    ANALYSE VIDEO
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             STATUS
+             ================================================= -->
+
+        <div
+                class="video-status"
+                id="videoStatus"
+        >
+            Waiting for video.
+        </div>
+
+
+        <!-- =================================================
+             RESULTS
+             ================================================= -->
+
+        <div
+                class="video-results"
+                id="videoResults"
+        >
+
+
+            <!-- VIDEO INFORMATION -->
+
+            <h3>
+                📊 Video Information
+            </h3>
+
+
+            <div
+                    class="video-info"
+                    id="videoInformation"
+            ></div>
+
+
+            <!-- OVERALL AI VIDEO DESCRIPTION -->
+
+            <div
+                    class="video-ai-description"
+                    id="videoDescriptionCard"
+                    style="display:none;"
+            >
+
+                <div class="video-ai-description-header">
+
+                    <span class="video-ai-description-icon">
+                        📝
+                    </span>
+
+                    <span>
+                        What Happened in This Video
+                    </span>
+
+                </div>
+
+
+                <div
+                        class="video-ai-description-text"
+                        id="videoDescription"
+                ></div>
+
+            </div>
+
+
+            <!-- DETECTED OBJECTS -->
+
+            <h3
+                    style="margin-top:30px;"
+            >
+                🔎 Detected Objects
+            </h3>
+
+
+            <div
+                    class="detected-objects"
+                    id="detectedObjects"
+            ></div>
+
+
+            <!-- EVENT TIMELINE -->
+
+            <h3
+                    style="margin-top:30px;"
+            >
+                🕒 Event Timeline
+            </h3>
+
+
+            <div class="timeline-wrapper">
+
+                <table class="timeline-table">
+
+                    <thead>
+
+                    <tr>
+
+                        <th>
+                            Object
+                        </th>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Start
+                        </th>
+
+                        <th>
+                            End
+                        </th>
+
+                        <th>
+                            Duration
+                        </th>
+
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody
+                            id="videoEventsTable"
+                    ></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
 
 </main>
 
 
 <script>
 
+
+    /* =========================================================
+       API
+       ========================================================= */
+
     const API_BASE = "";
 
     let anomaliesOnly = false;
 
 
-    /* =========================================
+    /* =========================================================
        LIVE CAMERA
-       ========================================= */
+       ========================================================= */
 
     const liveCamera =
-        document.getElementById("liveCamera");
+        document.getElementById(
+            "liveCamera"
+        );
+
 
     const cameraStatus =
-        document.getElementById("cameraStatus");
+        document.getElementById(
+            "cameraStatus"
+        );
+
 
     const cameraError =
-        document.getElementById("cameraError");
-
-
-    function updateLiveCamera() {
-
-        /*
-         * Add a timestamp so the browser does not
-         * use an old cached JPEG.
-         */
-        const timestamp = Date.now();
-
-        liveCamera.src =
-            `${API_BASE}/camera/frame?t=${timestamp}`;
-    }
-
-
-    liveCamera.onload = function () {
-
-        cameraStatus.textContent =
-            "● Camera online";
-
-        cameraStatus.style.color =
-            "var(--success)";
-
-        liveCamera.style.display =
-            "block";
-
-        cameraError.style.display =
-            "none";
-    };
-
-
-    liveCamera.onerror = function () {
-
-        cameraStatus.textContent =
-            "● Camera unavailable";
-
-        cameraStatus.style.color =
-            "var(--danger)";
-
-        liveCamera.style.display =
-            "none";
-
-        cameraError.style.display =
-            "block";
-    };
+        document.getElementById(
+            "cameraError"
+        );
 
 
     /*
-     * Request a new processed frame every 200 ms.
-     *
-     * That is approximately 5 frames per second
-     * in the browser.
+     * Browser object URL for the current JPEG.
+     */
+    let currentCameraObjectUrl = null;
+
+
+    /*
+     * Prevent multiple camera requests from
+     * running at the same time.
+     */
+    let cameraRequestRunning = false;
+
+
+    /*
+     * =========================================================
+     * UPDATE LIVE CAMERA
+     * =========================================================
+     */
+    async function updateLiveCamera() {
+
+        /*
+         * Do not start another request while the
+         * previous request is still running.
+         */
+        if (cameraRequestRunning) {
+            return;
+        }
+
+        cameraRequestRunning = true;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE}/camera/frame?t=${Date.now()}`,
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            /*
+             * =====================================================
+             * CAMERA OFFLINE
+             * =====================================================
+             */
+            if (response.status === 204) {
+
+                /*
+                 * Remove old image.
+                 */
+                liveCamera.removeAttribute(
+                    "src"
+                );
+
+                liveCamera.style.display =
+                    "none";
+
+
+                /*
+                 * Release old browser object URL.
+                 */
+                if (currentCameraObjectUrl) {
+
+                    URL.revokeObjectURL(
+                        currentCameraObjectUrl
+                    );
+
+                    currentCameraObjectUrl = null;
+                }
+
+
+                /*
+                 * Show offline state.
+                 */
+                cameraStatus.textContent =
+                    "● Camera offline";
+
+                cameraStatus.style.color =
+                    "var(--danger)";
+
+
+                cameraError.textContent =
+                    "Camera is offline.";
+
+                cameraError.style.display =
+                    "block";
+
+
+                return;
+            }
+
+
+            /*
+             * =====================================================
+             * HTTP ERROR
+             * =====================================================
+             */
+            if (!response.ok) {
+
+                throw new Error(
+                    "Camera frame unavailable. HTTP "
+                    + response.status
+                );
+            }
+
+
+            /*
+             * =====================================================
+             * READ JPEG
+             * =====================================================
+             */
+            const blob =
+                await response.blob();
+
+
+            if (!blob || blob.size === 0) {
+
+                throw new Error(
+                    "Camera returned an empty frame."
+                );
+            }
+
+
+            /*
+             * Create browser URL for JPEG.
+             */
+            const imageUrl =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            /*
+             * Release previous image URL.
+             */
+            if (currentCameraObjectUrl) {
+
+                URL.revokeObjectURL(
+                    currentCameraObjectUrl
+                );
+            }
+
+
+            currentCameraObjectUrl =
+                imageUrl;
+
+
+            /*
+             * Display current camera frame.
+             */
+            liveCamera.src =
+                imageUrl;
+
+            liveCamera.style.display =
+                "block";
+
+
+            /*
+             * Camera online.
+             */
+            cameraStatus.textContent =
+                "● Camera online";
+
+            cameraStatus.style.color =
+                "var(--success)";
+
+
+            /*
+             * Hide error.
+             */
+            cameraError.style.display =
+                "none";
+
+
+        } catch (error) {
+
+            console.error(
+                "Live camera error:",
+                error
+            );
+
+
+            /*
+             * Remove stale image.
+             */
+            liveCamera.removeAttribute(
+                "src"
+            );
+
+            liveCamera.style.display =
+                "none";
+
+
+            /*
+             * Release old browser URL.
+             */
+            if (currentCameraObjectUrl) {
+
+                URL.revokeObjectURL(
+                    currentCameraObjectUrl
+                );
+
+                currentCameraObjectUrl = null;
+            }
+
+
+            /*
+             * Camera offline.
+             */
+            cameraStatus.textContent =
+                "● Camera offline";
+
+            cameraStatus.style.color =
+                "var(--danger)";
+
+
+            cameraError.textContent =
+                "Camera is offline.";
+
+            cameraError.style.display =
+                "block";
+
+        } finally {
+
+            cameraRequestRunning = false;
+        }
+    }
+
+
+    /*
+     * Start camera immediately.
      */
     updateLiveCamera();
 
+
+    /*
+     * Refresh camera approximately 5 times
+     * per second.
+     */
     setInterval(
         updateLiveCamera,
         200
     );
 
 
-    /* =========================================
+    /* =========================================================
+       LIVE OBJECT ACTIVITY
+       ========================================================= */
+
+    async function fetchLiveActivity() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_BASE}/activity/live?t=${Date.now()}`,
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Activity API returned HTTP ${response.status}`
+                );
+            }
+
+
+            const activities =
+                await response.json();
+
+
+            renderLiveActivity(
+                activities
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Live activity error:",
+                error
+            );
+        }
+    }
+
+
+    function renderLiveActivity(
+        activities
+    ) {
+
+        const container =
+            document.getElementById(
+                "liveActivityList"
+            );
+
+
+        if (!container) {
+            return;
+        }
+
+
+        if (
+            !activities ||
+            activities.length === 0
+        ) {
+
+            container.innerHTML = `
+                <div class="empty">
+                    No objects detected.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        container.innerHTML =
+            activities
+                .map(
+                    activity => {
+
+                        const objectType =
+                            escapeHtml(
+                                activity.objectType
+                            );
+
+
+                        const objectId =
+                            activity.objectId;
+
+
+                        const activityName =
+                            escapeHtml(
+                                activity.activity
+                            );
+
+
+                        const confidence =
+                            Number(
+                                activity.confidence
+                            ) * 100;
+
+
+                        const stationarySeconds =
+                            activity.stationarySeconds;
+
+
+                        let alertHtml =
+                            "";
+
+
+                        if (activity.anomaly) {
+
+                            alertHtml = `
+                                <div class="activity-alert">
+
+                                    ⚠
+                                    ${escapeHtml(
+                                activity.alertMessage
+                                ||
+                                "Anomalous activity detected."
+                            )}
+
+                                </div>
+                            `;
+                        }
+
+
+                        return `
+
+                            <div class="activity-row">
+
+                                <div class="activity-header">
+
+                                    <div class="activity-object">
+
+                                        ${objectType}
+                                        #${objectId}
+
+                                    </div>
+
+
+                                    <div class="
+                                        activity-status
+                                        ${
+                            activity.anomaly
+                                ? "activity-anomaly"
+                                : "activity-normal"
+                        }
+                                    ">
+
+                                        ${
+                            activity.anomaly
+                                ? "⚠ ANOMALY"
+                                : "✓ NORMAL"
+                        }
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="activity-info">
+
+                                    <div>
+                                        Activity:
+                                        <strong>
+                                            ${activityName}
+                                        </strong>
+                                    </div>
+
+
+                                    <div>
+                                        Confidence:
+                                        <strong>
+                                            ${confidence.toFixed(1)}%
+                                        </strong>
+                                    </div>
+
+
+                                    <div>
+                                        Stationary:
+                                        <strong>
+                                            ${stationarySeconds}s
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                ${alertHtml}
+
+                            </div>
+                        `;
+                    }
+                )
+                .join("");
+    }
+
+
+    /*
+     * Start live activity immediately.
+     */
+    fetchLiveActivity();
+
+
+    /*
+     * Update activity once per second.
+     */
+    setInterval(
+        fetchLiveActivity,
+        1000
+    );
+
+
+    /* =========================================================
        CAMERAS
-       ========================================= */
+       ========================================================= */
 
     async function fetchCameras() {
 
         try {
 
-            const res =
+            const response =
                 await fetch(
                     `${API_BASE}/cameras`
                 );
 
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Could not fetch cameras."
+                );
+            }
+
+
             const cameras =
-                await res.json();
+                await response.json();
+
 
             const select =
                 document.getElementById(
                     "cameraFilter"
                 );
 
+
             const current =
                 select.value;
 
+
             select.innerHTML =
-                '<option value="">All cameras</option>' +
+                '<option value="">All cameras</option>'
+                +
                 cameras
                     .map(
-                        c =>
-                            `<option value="${c}">
-                                ${c}
-                             </option>`
+                        camera =>
+                            `<option value="${escapeHtml(camera)}">
+                                ${escapeHtml(camera)}
+                            </option>`
                     )
                     .join("");
 
+
             select.value =
                 current;
+
 
             document.getElementById(
                 "statCameras"
             ).textContent =
                 cameras.length;
 
-        } catch (e) {
+
+        } catch (error) {
 
             console.error(
                 "Could not fetch cameras:",
-                e
+                error
             );
-
         }
     }
 
 
-    /* =========================================
+    /* =========================================================
        EVENTS
-       ========================================= */
+       ========================================================= */
 
     async function fetchEvents() {
 
@@ -510,10 +1950,16 @@
                 "cameraFilter"
             ).value;
 
+
         const params =
-            new URLSearchParams({
-                limit: "100"
-            });
+            new URLSearchParams();
+
+
+        params.set(
+            "limit",
+            "100"
+        );
+
 
         if (cameraId) {
 
@@ -523,6 +1969,7 @@
             );
         }
 
+
         if (anomaliesOnly) {
 
             params.set(
@@ -531,19 +1978,39 @@
             );
         }
 
+
         try {
 
-            const res =
+            const response =
                 await fetch(
-                    `${API_BASE}/events?${params}`
+                    `${API_BASE}/events?${params.toString()}`
                 );
 
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Could not fetch events."
+                );
+            }
+
+
             const events =
-                await res.json();
+                await response.json();
 
-            renderEvents(events);
 
-        } catch (e) {
+            renderEvents(
+                events
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Could not fetch events:",
+                error
+            );
+
 
             document.getElementById(
                 "eventList"
@@ -551,38 +2018,46 @@
 
                 `<div class="empty">
                     Could not reach CCTV AI Monitor backend.
-                    <br>
-                    Make sure the Spring Boot application
-                    is running on port 8000.
+                    <br><br>
+                    Make sure Spring Boot is running
+                    on port 8000.
                 </div>`;
         }
     }
 
 
+    /* =========================================================
+       RENDER LIVE EVENTS
+       ========================================================= */
+
     function renderEvents(events) {
 
         const list =
-            document.getElementById("eventList");
+            document.getElementById(
+                "eventList"
+            );
 
-        /*
-         * Statistics
-         */
+
         document.getElementById(
             "statTotal"
-        ).textContent = events.length;
+        ).textContent =
+            events.length;
+
 
         document.getElementById(
             "statAnomalies"
         ).textContent =
+
             events.filter(
-                e => e.anomaly === true
+                event =>
+                    event.anomaly === true
             ).length;
 
 
-        /*
-         * No events
-         */
-        if (events.length === 0) {
+        if (
+            !events ||
+            events.length === 0
+        ) {
 
             list.innerHTML =
                 `<div class="empty">
@@ -593,246 +2068,944 @@
         }
 
 
-        /*
-         * Render events
-         */
         list.innerHTML =
+
             events
-                .map(e => {
-
-                    /*
-                     * Event type
-                     */
-                    const objectType =
-                        e.objectType
-                            ? e.objectType
-                            : "Unknown";
-
-
-                    /*
-                     * Camera
-                     */
-                    const cameraId =
-                        e.cameraId
-                            ? e.cameraId
-                            : "Unknown camera";
-
-
-                    /*
-                     * Start time
-                     */
-                    const startTime =
-                        e.startTime
-                            ? new Date(
-                                e.startTime
-                            ).toLocaleString()
-                            : (
-                                e.timestamp
-                                    ? new Date(
-                                        e.timestamp
-                                    ).toLocaleString()
-                                    : "Unknown time"
-                            );
-
-
-                    /*
-                     * End time
-                     *
-                     * NULL means the object is
-                     * still being tracked.
-                     */
-                    const endTime =
-                        e.endTime
-                            ? new Date(
-                                e.endTime
-                            ).toLocaleString()
-                            : "Still active";
-
-
-                    /*
-                     * Duration
-                     */
-                    let durationText =
-                        "Active";
-
-                    if (e.startTime && e.endTime) {
-
-                        const start =
-                            new Date(
-                                e.startTime
-                            ).getTime();
-
-                        const end =
-                            new Date(
-                                e.endTime
-                            ).getTime();
-
-                        const durationSeconds =
-                            Math.max(
-                                0,
-                                Math.round(
-                                    (end - start) / 1000
-                                )
-                            );
-
-                        durationText =
-                            `${durationSeconds} second${
-                                durationSeconds === 1
-                                    ? ""
-                                    : "s"
-                            }`;
-                    }
-
-
-                    /*
-                     * Object ID
-                     */
-                    const objectId =
-                        e.objectId !== null &&
-                        e.objectId !== undefined
-                            ? `#${e.objectId}`
-                            : "";
-
-
-                    /*
-                     * Anomaly
-                     */
-                    const isAnomaly =
-                        e.anomaly === true;
-
-
-                    /*
-                     * Similarity
-                     */
-                    const similarityText =
-                        e.similarity !== null &&
-                        e.similarity !== undefined
-                            ? ` · similarity ${e.similarity}`
-                            : "";
-
-
-                    return `
-
-                            <div class="event ${
-                        isAnomaly
-                            ? "anomaly"
-                            : ""
-                    }">
-
-                                <span class="badge ${
-                        isAnomaly
-                            ? "anomaly"
-                            : ""
-                    }">
-
-                                    ${
-                        isAnomaly
-                            ? "UNUSUAL"
-                            : "usual"
-                    }
-
-                                </span>
-
-
-                                <div class="event-body">
-
-                                    <div class="event-meta">
-
-                                        <strong>
-                                            ${
-                        objectType
-                    }
-                                            ${
-                        objectId
-                    }
-                                        </strong>
-
-                                        ·
-
-                                        ${
-                        cameraId
-                    }
-
-                                        ·
-
-                                        ${
-                        startTime
-                    }
-
-                                    </div>
-
-
-                                    <div class="event-desc">
-
-                                        ${
-                        e.description
-                        || `${objectType} ${objectId} detected`
-                    }
-
-                                        <br>
-
-                                        <span style="
-                                            color: var(--muted);
-                                            font-size: 12px;
-                                        ">
-
-                                            Start:
-                                            ${
-                        startTime
-                    }
-
-                                            &nbsp; | &nbsp;
-
-                                            End:
-                                            ${
-                        endTime
-                    }
-
-                                            &nbsp; | &nbsp;
-
-                                            Duration:
-                                            ${
-                        durationText
-                    }
-
-                                            ${
-                        similarityText
-                    }
-
-                                        </span>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        `;
-                })
+                .map(
+                    event =>
+                        renderSingleEvent(
+                            event
+                        )
+                )
                 .join("");
     }
 
 
-    /* =========================================
+    /* =========================================================
+       SINGLE LIVE EVENT
+       ========================================================= */
+
+    function renderSingleEvent(event) {
+
+        const objectType =
+            event.objectType
+                ? event.objectType
+                : "Unknown";
+
+
+        const cameraId =
+            event.cameraId
+                ? event.cameraId
+                : "Unknown camera";
+
+
+        const startTime =
+            event.startTime
+                ? new Date(
+                    event.startTime
+                ).toLocaleString()
+
+                : (
+
+                    event.timestamp
+                        ? new Date(
+                            event.timestamp
+                        ).toLocaleString()
+
+                        : "Unknown time"
+                );
+
+
+        const endTime =
+            event.endTime
+
+                ? new Date(
+                    event.endTime
+                ).toLocaleString()
+
+                : "Still active";
+
+
+        let durationText =
+            "Active";
+
+
+        if (
+            event.startTime
+            &&
+            event.endTime
+        ) {
+
+            const start =
+                new Date(
+                    event.startTime
+                ).getTime();
+
+
+            const end =
+                new Date(
+                    event.endTime
+                ).getTime();
+
+
+            const durationSeconds =
+                Math.max(
+                    0,
+                    Math.round(
+                        (end - start)
+                        / 1000
+                    )
+                );
+
+
+            durationText =
+                `${durationSeconds} second${
+                    durationSeconds === 1
+                        ? ""
+                        : "s"
+                }`;
+        }
+
+
+        const objectId =
+            event.objectId !== null
+            &&
+            event.objectId !== undefined
+
+                ? `#${event.objectId}`
+
+                : "";
+
+
+        const isAnomaly =
+            event.anomaly === true;
+
+
+        const similarityText =
+
+            event.similarity !== null
+            &&
+            event.similarity !== undefined
+
+                ? ` · similarity ${event.similarity}`
+
+                : "";
+
+
+        return `
+
+            <div class="event ${
+            isAnomaly
+                ? "anomaly"
+                : ""
+        }">
+
+                <span class="badge ${
+            isAnomaly
+                ? "anomaly"
+                : ""
+        }">
+
+                    ${
+            isAnomaly
+                ? "UNUSUAL"
+                : "usual"
+        }
+
+                </span>
+
+
+                <div class="event-body">
+
+                    <div class="event-meta">
+
+                        <strong>
+                            ${escapeHtml(objectType)}
+                            ${escapeHtml(objectId)}
+                        </strong>
+
+                        ·
+
+                        ${escapeHtml(cameraId)}
+
+                        ·
+
+                        ${escapeHtml(startTime)}
+
+                    </div>
+
+
+                    <div class="event-desc">
+
+                        ${
+            escapeHtml(
+                event.description
+                ||
+                `${objectType} ${objectId} detected`
+            )
+        }
+
+                        <br><br>
+
+                        <span style="
+                            color:var(--muted);
+                            font-size:12px;
+                        ">
+
+                            Start:
+                            ${escapeHtml(startTime)}
+
+                            &nbsp; | &nbsp;
+
+                            End:
+                            ${escapeHtml(endTime)}
+
+                            &nbsp; | &nbsp;
+
+                            Duration:
+                            ${escapeHtml(durationText)}
+
+                            ${escapeHtml(similarityText)}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    /* =========================================================
+       VIDEO ANALYZER
+       ========================================================= */
+
+    const videoFileInput =
+        document.getElementById(
+            "videoFile"
+        );
+
+
+    const selectedVideo =
+        document.getElementById(
+            "selectedVideo"
+        );
+
+
+    const analyseVideoButton =
+        document.getElementById(
+            "analyseVideoButton"
+        );
+
+
+    const videoStatus =
+        document.getElementById(
+            "videoStatus"
+        );
+
+
+    const videoResults =
+        document.getElementById(
+            "videoResults"
+        );
+
+
+    const videoInformation =
+        document.getElementById(
+            "videoInformation"
+        );
+
+
+    const videoDescriptionCard =
+        document.getElementById(
+            "videoDescriptionCard"
+        );
+
+
+    const videoDescription =
+        document.getElementById(
+            "videoDescription"
+        );
+
+
+    const detectedObjects =
+        document.getElementById(
+            "detectedObjects"
+        );
+
+
+    const videoEventsTable =
+        document.getElementById(
+            "videoEventsTable"
+        );
+
+
+    /* =========================================================
+       VIDEO FILE SELECTED
+       ========================================================= */
+
+    videoFileInput.addEventListener(
+        "change",
+        function () {
+
+            const file =
+                videoFileInput.files[0];
+
+
+            if (!file) {
+
+                selectedVideo.textContent =
+                    "No video selected.";
+
+
+                analyseVideoButton.disabled =
+                    true;
+
+
+                return;
+            }
+
+
+            const filename =
+                file.name.toLowerCase();
+
+
+            const supported =
+
+                filename.endsWith(".mp4")
+
+                ||
+
+                filename.endsWith(".avi")
+
+                ||
+
+                filename.endsWith(".mov")
+
+                ||
+
+                filename.endsWith(".mkv");
+
+
+            if (!supported) {
+
+                selectedVideo.textContent =
+                    "❌ Unsupported video format.";
+
+
+                analyseVideoButton.disabled =
+                    true;
+
+
+                return;
+            }
+
+
+            const sizeMB =
+                (
+                    file.size
+                    /
+                    (1024 * 1024)
+                ).toFixed(2);
+
+
+            selectedVideo.innerHTML =
+
+                "Selected: <strong>"
+                +
+                escapeHtml(
+                    file.name
+                )
+                +
+                "</strong>"
+                +
+                " ("
+                +
+                sizeMB
+                +
+                " MB)";
+
+
+            analyseVideoButton.disabled =
+                false;
+
+
+            videoStatus.className =
+                "video-status";
+
+
+            videoStatus.textContent =
+                "Video ready for analysis.";
+
+
+            videoResults.style.display =
+                "none";
+
+
+            videoDescriptionCard.style.display =
+                "none";
+
+
+            videoDescription.textContent =
+                "";
+        }
+    );
+
+
+    /* =========================================================
+       ANALYSE UPLOADED VIDEO
+       ========================================================= */
+
+    async function analyseUploadedVideo() {
+
+        const file =
+            videoFileInput.files[0];
+
+
+        if (!file) {
+
+            alert(
+                "Please select a video first."
+            );
+
+            return;
+        }
+
+
+        analyseVideoButton.disabled =
+            true;
+
+
+        videoStatus.className =
+            "video-status";
+
+
+        videoStatus.innerHTML =
+            "⏳ Uploading video, analyzing frames, and generating the overall AI description...";
+
+
+        videoResults.style.display =
+            "none";
+
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "file",
+            file
+        );
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/video/analyse",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result.error
+                    ||
+                    "Video analysis failed."
+                );
+            }
+
+
+            videoStatus.className =
+                "video-status video-success";
+
+
+            videoStatus.innerHTML =
+                "✅ Video analysis completed.";
+
+
+            displayVideoInformation(
+                result
+            );
+
+
+            displayVideoDescription(
+                result.video_description
+            );
+
+
+            displayDetectedObjects(
+                result.detected_objects
+            );
+
+
+            displayVideoEvents(
+                result.events
+            );
+
+
+            videoResults.style.display =
+                "block";
+
+
+        } catch (error) {
+
+            console.error(
+                "Video analysis error:",
+                error
+            );
+
+
+            videoStatus.className =
+                "video-status video-error";
+
+
+            videoStatus.innerHTML =
+                "❌ "
+                +
+                escapeHtml(
+                    error.message
+                );
+
+
+        } finally {
+
+            analyseVideoButton.disabled =
+                false;
+        }
+    }
+
+
+    /* =========================================================
+       VIDEO INFORMATION
+       ========================================================= */
+
+    function displayVideoInformation(
+        result
+    ) {
+
+        const duration =
+            formatSeconds(
+                result.duration_seconds
+            );
+
+
+        videoInformation.innerHTML = `
+
+            <div class="video-info-card">
+
+                <div class="video-info-label">
+                    Filename
+                </div>
+
+                <div class="video-info-value">
+                    ${escapeHtml(
+            result.filename
+        )}
+                </div>
+
+            </div>
+
+
+            <div class="video-info-card">
+
+                <div class="video-info-label">
+                    Duration
+                </div>
+
+                <div class="video-info-value">
+                    ${duration}
+                </div>
+
+            </div>
+
+
+            <div class="video-info-card">
+
+                <div class="video-info-label">
+                    FPS
+                </div>
+
+                <div class="video-info-value">
+                    ${Number(
+            result.fps
+        ).toFixed(2)}
+                </div>
+
+            </div>
+
+
+            <div class="video-info-card">
+
+                <div class="video-info-label">
+                    Frames processed
+                </div>
+
+                <div class="video-info-value">
+                    ${result.frame_count}
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    /* =========================================================
+       OVERALL AI VIDEO DESCRIPTION
+       ========================================================= */
+
+    function displayVideoDescription(
+        description
+    ) {
+
+        if (
+            !description
+            ||
+            String(description).trim() === ""
+        ) {
+
+            videoDescription.textContent =
+                "No overall video description was generated.";
+
+
+            videoDescription.className =
+                "video-ai-description-empty";
+
+
+            videoDescriptionCard.style.display =
+                "block";
+
+
+            return;
+        }
+
+
+        videoDescription.textContent =
+            String(description).trim();
+
+
+        videoDescription.className =
+            "video-ai-description-text";
+
+
+        videoDescriptionCard.style.display =
+            "block";
+    }
+
+
+    /* =========================================================
+       DETECTED OBJECTS
+       ========================================================= */
+
+    function displayDetectedObjects(
+        objects
+    ) {
+
+        detectedObjects.innerHTML =
+            "";
+
+
+        if (
+            !objects
+            ||
+            objects.length === 0
+        ) {
+
+            detectedObjects.innerHTML =
+
+                `<div class="no-objects">
+                    No supported objects detected.
+                </div>`;
+
+            return;
+        }
+
+
+        objects.forEach(
+            function (object) {
+
+                const badge =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                badge.className =
+                    "object-badge";
+
+
+                badge.textContent =
+                    object;
+
+
+                detectedObjects.appendChild(
+                    badge
+                );
+            }
+        );
+    }
+
+
+    /* =========================================================
+       VIDEO EVENT TIMELINE
+       ========================================================= */
+
+    function displayVideoEvents(
+        events
+    ) {
+
+        videoEventsTable.innerHTML =
+            "";
+
+
+        if (
+            !events
+            ||
+            events.length === 0
+        ) {
+
+            videoEventsTable.innerHTML =
+
+                `
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            style="
+                                padding:20px;
+                                text-align:center;
+                                color:var(--muted);
+                            "
+                        >
+
+                            No tracking events detected.
+
+                        </td>
+
+                    </tr>
+                `;
+
+
+            return;
+        }
+
+
+        events.forEach(
+            function (event) {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                row.innerHTML = `
+
+                    <td>
+
+                        <span class="video-object-name">
+
+                            ${escapeHtml(
+                    event.object_type
+                )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="video-object-id">
+
+                            #${event.object_id}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHtml(
+                    event.start
+                )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${escapeHtml(
+                    event.end
+                )}
+
+                    </td>
+
+
+                    <td>
+
+                        ${Number(
+                    event.duration_seconds
+                ).toFixed(2)}
+
+                        sec
+
+                    </td>
+
+                `;
+
+
+                videoEventsTable.appendChild(
+                    row
+                );
+            }
+        );
+    }
+
+
+    /* =========================================================
+       FORMAT VIDEO SECONDS
+       ========================================================= */
+
+    function formatSeconds(
+        seconds
+    ) {
+
+        if (
+            !Number.isFinite(
+                Number(seconds)
+            )
+        ) {
+
+            return "00:00:00";
+        }
+
+
+        const totalSeconds =
+            Math.floor(
+                Number(seconds)
+            );
+
+
+        const hours =
+            Math.floor(
+                totalSeconds / 3600
+            );
+
+
+        const minutes =
+            Math.floor(
+                (totalSeconds % 3600)
+                / 60
+            );
+
+
+        const secs =
+            totalSeconds % 60;
+
+
+        return String(hours)
+                .padStart(2, "0")
+
+            +
+
+            ":"
+
+            +
+
+            String(minutes)
+                .padStart(2, "0")
+
+            +
+
+            ":"
+
+            +
+
+            String(secs)
+                .padStart(2, "0");
+    }
+
+
+    /* =========================================================
+       HTML ESCAPE
+       ========================================================= */
+
+    function escapeHtml(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+    }
+
+
+    /* =========================================================
        BUTTONS
-       ========================================= */
+       ========================================================= */
 
     document
-        .getElementById("refreshBtn")
+        .getElementById(
+            "refreshBtn"
+        )
         .addEventListener(
             "click",
-            () => {
+            function () {
 
                 fetchCameras();
-                fetchEvents();
-                updateLiveCamera();
 
+                fetchEvents();
+
+                fetchLiveActivity();
+
+                updateLiveCamera();
             }
         );
 
 
     document
-        .getElementById("cameraFilter")
+        .getElementById(
+            "cameraFilter"
+        )
         .addEventListener(
             "change",
             fetchEvents
@@ -840,41 +3013,57 @@
 
 
     document
-        .getElementById("anomalyToggle")
+        .getElementById(
+            "anomalyToggle"
+        )
         .addEventListener(
             "click",
-            (e) => {
+            function () {
 
                 anomaliesOnly =
                     !anomaliesOnly;
 
-                e.target.textContent =
+
+                this.textContent =
                     anomaliesOnly
                         ? "Show all"
                         : "Anomalies only";
 
-                fetchEvents();
 
+                fetchEvents();
             }
         );
 
 
-    /* =========================================
+    /* =========================================================
+       VIDEO ANALYZER BUTTON
+       ========================================================= */
+
+    analyseVideoButton.addEventListener(
+        "click",
+        analyseUploadedVideo
+    );
+
+
+    /* =========================================================
        INITIAL LOAD
-       ========================================= */
+       ========================================================= */
 
     fetchCameras();
 
     fetchEvents();
 
+    fetchLiveActivity();
+
 
     /*
-     * Refresh event/camera information every 5 seconds.
+     * Refresh camera/event information every 5 seconds.
      */
     setInterval(
-        () => {
+        function () {
 
             fetchCameras();
+
             fetchEvents();
 
         },
@@ -883,5 +3072,7 @@
 
 </script>
 
+
 </body>
+
 </html>

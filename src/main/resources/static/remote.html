@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCTV AI — Remote Camera</title>
+  <style>
+    :root {
+      --bg:      #07090d;
+      --surface: #0f131a;
+      --line:    rgba(255,255,255,.08);
+      --text:    #f5f7fa;
+      --muted:   #8c96a6;
+      --green:   #42e89a;
+      --blue:    #6ea8ff;
+      --purple:  #8b6cff;
+      --red:     #ff5f73;
+      --amber:   #ffb347;
+      --shadow:  0 20px 60px rgba(0,0,0,.4);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: radial-gradient(circle at 50% -20%, #171327 0, #0a0d12 42%, #07090d 100%);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      display: block;
+      height: 3px;
+      background: linear-gradient(90deg, #5e45ff, #9b7cff, #42e89a, #5e45ff);
+      box-shadow: 0 0 24px rgba(139,108,255,.5);
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .brand-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px rgba(66,232,154,.8);
+      flex-shrink: 0;
+    }
+
+    .remote-badge {
+      background: rgba(139,108,255,.15);
+      border: 1px solid rgba(139,108,255,.35);
+      color: #b09dff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 4px 9px;
+      border-radius: 999px;
+    }
+
+    #statusPill {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(66,232,154,.22);
+      background: rgba(66,232,154,.07);
+      color: var(--green);
+      transition: all .3s;
+      white-space: nowrap;
+    }
+    #statusPill.offline { color:var(--muted); border-color:rgba(140,150,166,.2); background:rgba(140,150,166,.06); }
+    #statusPill.error   { color:var(--red);   border-color:rgba(255,95,115,.25);  background:rgba(255,95,115,.07); }
+    #statusPill.warning { color:var(--amber); border-color:rgba(255,179,71,.25);  background:rgba(255,179,71,.07); }
+
+    .cam-wrap {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 148px);
+      min-height: 480px;
+      background: #000;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .cam-wrap::after {
+      content: "REMOTE \00B7 LIVE";
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 10;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      color: #fff;
+      background: rgba(139,108,255,.88);
+      padding: 5px 9px;
+      border-radius: 7px;
+    }
+
+    #webcamVideo {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: contain;
+      background: #000;
+      display: none;
+    }
+
+    #overlayCanvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    #camPlaceholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+      z-index: 6;
+    }
+    #camPlaceholder .ph-icon { font-size: 54px; line-height: 1; }
+    #camPlaceholder p { font-size: 15px; max-width: 320px; line-height: 1.55; }
+
+    .hud {
+      position: absolute;
+      top: 14px; right: 14px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .hud-chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 8px;
+      backdrop-filter: blur(12px);
+      letter-spacing: .5px;
+    }
+    .hud-chip.objects {
+      background: rgba(110,168,255,.18);
+      border: 1px solid rgba(110,168,255,.3);
+      color: var(--blue);
+    }
+    .hud-chip.rec {
+      background: rgba(255,95,115,.18);
+      border: 1px solid rgba(255,95,115,.3);
+      color: var(--red);
+      display: none;
+    }
+    .hud-chip.rec.active { display: block; }
+
+    .controls-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      transition: background .18s, border-color .18s, transform .12s;
+      white-space: nowrap;
+    }
+    button:hover:not(:disabled) { background:rgba(255,255,255,.08); border-color:rgba(110,168,255,.4); transform:translateY(-1px); }
+    button:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg,#6f5cff,#4c8dff);
+      border: none;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(111,92,255,.35);
+    }
+    .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg,#7d6cff,#5c9dff); }
+
+    .btn-record {
+      background: rgba(255,95,115,.1);
+      border-color: rgba(255,95,115,.3);
+      color: var(--red);
+    }
+    .btn-record.recording {
+      background: rgba(255,95,115,.22);
+      border-color: var(--red);
+      animation: pulse-record 1.4s infinite;
+    }
+    @keyframes pulse-record {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,95,115,.4); }
+      50%      { box-shadow: 0 0 0 8px rgba(255,95,115,0); }
+    }
+
+    #cameraSelect {
+      font: inherit;
+      font-size: 13px;
+      color: var(--text);
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      flex: 1;
+      min-width: 0;
+      max-width: 280px;
+    }
+    #cameraSelect:focus { outline: none; border-color: rgba(110,168,255,.5); }
+
+    .activity-panel {
+      margin-top: 16px;
+      background: linear-gradient(180deg,rgba(20,25,35,.94),rgba(12,16,22,.94));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .activity-title { font-size:14px; font-weight:650; margin-bottom:12px; }
+    .activity-row {
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .activity-obj  { font-weight:650; font-size:14px; }
+    .activity-info { color:var(--muted); font-size:12px; }
+    .activity-normal  { color:var(--green); font-size:12px; font-weight:700; }
+    .activity-anomaly { color:var(--red);   font-size:12px; font-weight:700; }
+    .empty { color:var(--muted); font-size:13px; padding:6px 0; }
+
+    .recordings-panel {
+      margin-top: 16px;
+      background: linear-gradient(180deg,rgba(20,25,35,.94),rgba(12,16,22,.94));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .recordings-title { font-size:14px; font-weight:650; margin-bottom:12px; }
+    .recording-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .recording-item:last-child { border-bottom: none; }
+    .recording-name { flex:1; font-size:13px; }
+    .recording-size { color:var(--muted); font-size:12px; }
+    .btn-dl {
+      font-size:12px; padding:6px 12px;
+      background:rgba(66,232,154,.1);
+      border-color:rgba(66,232,154,.25);
+      color:var(--green);
+      border-radius:8px;
+    }
+    .btn-dl:hover:not(:disabled) { background:rgba(66,232,154,.2); }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#303846; border-radius:10px; }
+
+    @media (max-width:640px) {
+      .page { padding:0 12px 32px; }
+      .cam-wrap { height:calc(100vh - 130px); min-height:320px; border-radius:14px; }
+      button { padding:9px 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      📹 CCTV AI Monitor
+      <span class="remote-badge">REMOTE</span>
+    </div>
+    <div id="statusPill" class="offline">● Initialising…</div>
+  </div>
+
+  <!-- CAMERA VIEWPORT -->
+  <div class="cam-wrap" id="camWrap">
+    <video id="webcamVideo" autoplay playsinline muted></video>
+    <canvas id="overlayCanvas"></canvas>
+    <div class="hud">
+      <div class="hud-chip objects" id="hudObjects">0 objects</div>
+      <div class="hud-chip rec" id="hudRec">&#9210; REC 00:00</div>
+    </div>
+    <div id="camPlaceholder">
+      <div class="ph-icon">📷</div>
+      <p>Click <strong>Start Camera</strong> below to activate <em>this device's</em> webcam for AI monitoring.</p>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-strip">
+    <select id="cameraSelect" title="Select camera"></select>
+    <button class="btn-primary" id="btnStart">&#9654; Start Camera</button>
+    <button id="btnStop" disabled>&#9632; Stop</button>
+    <button class="btn-record" id="btnRecord" disabled>&#9210; Record</button>
+    <button id="btnSave" disabled>&#128190; Save Recording</button>
+  </div>
+
+  <!-- ACTIVITY PANEL -->
+  <div class="activity-panel">
+    <div class="activity-title">🎯 Live Object Activity</div>
+    <div id="activityList"><div class="empty">Waiting for camera…</div></div>
+  </div>
+
+  <!-- SAVED RECORDINGS -->
+  <div class="recordings-panel">
+    <div class="recordings-title">💾 Recordings saved on this device</div>
+    <div id="recordingsList"><div class="empty">No recordings yet.</div></div>
+  </div>
+
+</div>
+
+<script>
+  /* =========================================================
+     CONFIG
+     =========================================================
+     SERVER is auto-derived from the URL Laptop B used to open
+     this page — so it always points back to Laptop A's server.
+  ========================================================= */
+  const SERVER       = window.location.origin;
+  const SESSION_ID   = "remote-" + Math.random().toString(36).slice(2, 10);
+  const FRAME_MS     = 250;   // capture every 250 ms = 4 fps
+  const BOX_NORMAL   = "#42e89a";
+  const BOX_ANOMALY  = "#ff5f73";
+
+  const MIME =
+    MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" :
+    MediaRecorder.isTypeSupported("video/webm")            ? "video/webm"            :
+    "video/mp4";
+
+  /* DOM */
+  const video          = document.getElementById("webcamVideo");
+  const canvas         = document.getElementById("overlayCanvas");
+  const ctx            = canvas.getContext("2d");
+  const camPlaceholder = document.getElementById("camPlaceholder");
+  const statusPill     = document.getElementById("statusPill");
+  const hudObjects     = document.getElementById("hudObjects");
+  const hudRec         = document.getElementById("hudRec");
+  const activityList   = document.getElementById("activityList");
+  const recordingsList = document.getElementById("recordingsList");
+  const cameraSelect   = document.getElementById("cameraSelect");
+  const btnStart       = document.getElementById("btnStart");
+  const btnStop        = document.getElementById("btnStop");
+  const btnRecord      = document.getElementById("btnRecord");
+  const btnSave        = document.getElementById("btnSave");
+
+  /* State */
+  let stream        = null;
+  let frameTimer    = null;
+  let sending       = false;
+  let mediaRecorder = null;
+  let recChunks     = [];
+  let isRecording   = false;
+  let recStart      = null;
+  let recTick       = null;
+  let savedRecs     = [];
+
+
+  /* =========================================================
+     ENUMERATE CAMERAS
+  ========================================================= */
+  async function loadDevices() {
+    try {
+      /* Need a temporary permission grant so labels appear */
+      const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      tmp.getTracks().forEach(t => t.stop());
+
+      const all = await navigator.mediaDevices.enumerateDevices();
+      const cams = all.filter(d => d.kind === "videoinput");
+
+      cameraSelect.innerHTML = cams.map((d, i) =>
+        `<option value="${esc(d.deviceId)}">${esc(d.label || "Camera " + (i + 1))}</option>`
+      ).join("");
+    } catch (_) {
+      cameraSelect.innerHTML = `<option value="">Default camera</option>`;
+    }
+  }
+
+
+  /* =========================================================
+     START — use THIS device's webcam
+  ========================================================= */
+  async function startCamera() {
+    btnStart.disabled = true;
+    setStatus("Requesting camera access…", "warning");
+
+    try {
+      stopStream();
+
+      const devId = cameraSelect.value;
+      const constraints = {
+        video: devId
+          ? { deviceId: { exact: devId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      };
+
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      video.style.display = "block";
+      camPlaceholder.style.display = "none";
+
+      await new Promise(r => { video.onloadedmetadata = r; });
+      syncCanvas();
+
+      frameTimer = setInterval(captureAndSend, FRAME_MS);
+
+      setStatus("● Live — AI active", "online");
+      btnStop.disabled   = false;
+      btnRecord.disabled = false;
+
+    } catch (err) {
+      console.error(err);
+      setStatus("● Camera error: " + err.message, "error");
+    } finally {
+      btnStart.disabled = false;
+    }
+  }
+
+
+  /* =========================================================
+     STOP
+  ========================================================= */
+  function stopCamera() {
+    clearInterval(frameTimer);
+    frameTimer = null;
+    stopRecording();
+    stopStream();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    video.style.display = "none";
+    camPlaceholder.style.display = "flex";
+
+    renderActivity([]);
+    hudObjects.textContent = "0 objects";
+    setStatus("● Stopped", "offline");
+
+    btnStop.disabled   = true;
+    btnRecord.disabled = true;
+    btnSave.disabled   = true;
+
+    fetch(`${SERVER}/browser/session/close?session_id=${encodeURIComponent(SESSION_ID)}`, {
+      method: "POST"
+    }).catch(() => {});
+  }
+
+  function stopStream() {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+      video.srcObject = null;
+    }
+  }
+
+  function syncCanvas() {
+    canvas.width  = video.videoWidth  || video.clientWidth;
+    canvas.height = video.videoHeight || video.clientHeight;
+  }
+
+  window.addEventListener("resize", () => { if (stream) syncCanvas(); });
+
+
+  /* =========================================================
+     CAPTURE FRAME → SEND TO SERVER → DRAW BOXES
+  ========================================================= */
+  async function captureAndSend() {
+    if (sending || !stream || !video.videoWidth) return;
+    sending = true;
+
+    try {
+      /* Snapshot current webcam frame into a temp canvas */
+      const tmp = document.createElement("canvas");
+      tmp.width  = video.videoWidth;
+      tmp.height = video.videoHeight;
+      tmp.getContext("2d").drawImage(video, 0, 0);
+
+      const blob = await new Promise(r => tmp.toBlob(r, "image/jpeg", 0.75));
+      if (!blob || blob.size === 0) return;
+
+      /* POST to Spring Boot server */
+      const form = new FormData();
+      form.append("session_id", SESSION_ID);
+      form.append("frame", blob, "frame.jpg");
+
+      const res = await fetch(`${SERVER}/browser/detect`, { method: "POST", body: form });
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      drawBoxes(data.detectedObjects || [], video.videoWidth, video.videoHeight);
+      renderActivity(data.activities || []);
+
+      const cnt = data.objectCount || 0;
+      hudObjects.textContent = cnt + " object" + (cnt === 1 ? "" : "s");
+
+    } catch (e) {
+      console.warn("Send error:", e);
+    } finally {
+      sending = false;
+    }
+  }
+
+
+  /* =========================================================
+     DRAW BOUNDING BOXES
+  ========================================================= */
+  function drawBoxes(objects, vidW, vidH) {
+    const sx = canvas.width  / vidW;
+    const sy = canvas.height / vidH;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    objects.forEach(obj => {
+      if (obj.x == null) return;
+
+      const x = obj.x * sx, y = obj.y * sy;
+      const w = obj.width * sx, h = obj.height * sy;
+      const col = obj.anomaly ? BOX_ANOMALY : BOX_NORMAL;
+
+      /* Main rectangle */
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+
+      /* Corner brackets */
+      const cs = 12;
+      ctx.lineWidth = 3;
+      [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + dy*cs);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx + dx*cs, cy);
+        ctx.strokeStyle = col;
+        ctx.stroke();
+      });
+
+      /* Label */
+      const label =
+        (obj.objectType || "obj") + " #" + (obj.objectId ?? "") +
+        " " + (Number(obj.confidence || 0) * 100).toFixed(0) + "%";
+
+      ctx.font = "bold 12px Inter,sans-serif";
+      const tw = ctx.measureText(label).width;
+      const ly = y > 22 ? y - 22 : y + 4;
+
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(x - 2, ly, tw + 10, 18);
+      ctx.fillStyle = col;
+      ctx.fillText(label, x + 3, ly + 14);
+    });
+  }
+
+
+  /* =========================================================
+     ACTIVITY PANEL
+  ========================================================= */
+  function renderActivity(acts) {
+    if (!acts || acts.length === 0) {
+      activityList.innerHTML = '<div class="empty">No objects detected.</div>';
+      return;
+    }
+    activityList.innerHTML = acts.map(a => {
+      const anom  = a.anomaly === true;
+      const alert = a.alertMessage ? esc(a.alertMessage) : "";
+      return `
+        <div class="activity-row">
+          <div>
+            <div class="activity-obj">${esc(a.objectType||"obj")} #${a.objectId??""}</div>
+            <div class="activity-info">${esc(a.activity||"")} &nbsp;·&nbsp; ${(Number(a.confidence||0)*100).toFixed(1)}%</div>
+            ${anom && alert ? `<div style="color:var(--red);font-size:12px;margin-top:4px;">&#9888; ${alert}</div>` : ""}
+          </div>
+          <div class="${anom ? "activity-anomaly" : "activity-normal"}">${anom ? "&#9888; ANOMALY" : "&#10003; NORMAL"}</div>
+        </div>`;
+    }).join("");
+  }
+
+
+  /* =========================================================
+     RECORDING — all saved locally on Laptop B
+  ========================================================= */
+  function startRecording() {
+    if (!stream || isRecording) return;
+    recChunks = [];
+
+    try {
+      mediaRecorder = new MediaRecorder(stream, { mimeType: MIME });
+    } catch (_) {
+      mediaRecorder = new MediaRecorder(stream);
+    }
+
+    mediaRecorder.ondataavailable = e => {
+      if (e.data && e.data.size > 0) recChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const ext  = MIME.includes("mp4") ? "mp4" : "webm";
+      const mime = MIME.includes("mp4") ? "video/mp4" : "video/webm";
+      const blob = new Blob(recChunks, { type: mime });
+      const name = "cctv-remote-" + fmtDate(new Date()) + "." + ext;
+      const sizeMB = (blob.size / 1048576).toFixed(2);
+
+      savedRecs.push({ name, blob, sizeMB });
+      renderRecs();
+      btnSave.disabled = false;
+    };
+
+    mediaRecorder.start(1000);
+    isRecording = true;
+    recStart    = Date.now();
+
+    btnRecord.textContent = "&#9632; Stop Recording";
+    btnRecord.classList.add("recording");
+    btnSave.disabled = true;
+    hudRec.classList.add("active");
+
+    recTick = setInterval(() => {
+      const s = Math.floor((Date.now() - recStart) / 1000);
+      hudRec.textContent = "\u23FA REC " + fmtSec(s);
+    }, 1000);
+  }
+
+  function stopRecording() {
+    if (!isRecording) return;
+    clearInterval(recTick);
+    isRecording = false;
+    if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    btnRecord.textContent = "&#9210; Record";
+    btnRecord.classList.remove("recording");
+    hudRec.classList.remove("active");
+    hudRec.textContent = "\u23FA REC 00:00";
+  }
+
+
+  /* =========================================================
+     SAVED RECORDINGS LIST
+  ========================================================= */
+  function renderRecs() {
+    if (savedRecs.length === 0) {
+      recordingsList.innerHTML = '<div class="empty">No recordings yet.</div>';
+      return;
+    }
+    recordingsList.innerHTML = savedRecs.map((r, i) => `
+      <div class="recording-item">
+        <div class="recording-name">&#127916; ${esc(r.name)}</div>
+        <div class="recording-size">${r.sizeMB} MB</div>
+        <button class="btn-dl" onclick="dlRec(${i})">&#11015; Download</button>
+      </div>`).join("");
+  }
+
+  function dlRec(i) {
+    const r = savedRecs[i];
+    if (!r) return;
+    const url = URL.createObjectURL(r.blob);
+    const a   = Object.assign(document.createElement("a"), { href: url, download: r.name });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+
+  /* =========================================================
+     HELPERS
+  ========================================================= */
+  function setStatus(t, cls) {
+    statusPill.textContent = t;
+    statusPill.className   = cls || "offline";
+  }
+
+  function esc(v) {
+    return String(v ?? "")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  }
+
+  function fmtSec(s) {
+    return String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
+  }
+
+  function fmtDate(d) {
+    return [d.getFullYear(),
+      String(d.getMonth()+1).padStart(2,"0"),
+      String(d.getDate()).padStart(2,"0")].join("-") + "_" +
+      [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,"0")).join("-");
+  }
+
+
+  /* =========================================================
+     BUTTON WIRING
+  ========================================================= */
+  btnStart.addEventListener("click", startCamera);
+  btnStop.addEventListener("click",  stopCamera);
+  btnRecord.addEventListener("click", () => isRecording ? stopRecording() : startRecording());
+  btnSave.addEventListener("click",   () => savedRecs.length && dlRec(savedRecs.length - 1));
+
+
+  /* =========================================================
+     CLEANUP ON LEAVE
+  ========================================================= */
+  window.addEventListener("beforeunload", () => {
+    navigator.sendBeacon(
+      `${SERVER}/browser/session/close?session_id=${encodeURIComponent(SESSION_ID)}`
+    );
+  });
+
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  loadDevices().then(() => setStatus("● Ready — click Start Camera", "offline"));
+</script>
+</body>
+</html>

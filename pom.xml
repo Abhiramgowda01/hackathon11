@@ -21,24 +21,22 @@
 
 
   <!-- =========================================================
-       PROJECT INFORMATION
+       PROJECT
        ========================================================= -->
 
   <groupId>com.cctvai</groupId>
-
   <artifactId>cctv-ai-monitor</artifactId>
-
   <version>1.0.0</version>
-
   <packaging>jar</packaging>
 
 
   <!-- =========================================================
-       JAVA VERSION
+       JAVA
        ========================================================= -->
 
   <properties>
     <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
 
@@ -48,30 +46,21 @@
 
   <dependencies>
 
-    <!-- =====================================================
-         SPRING WEB
-         ===================================================== -->
-
+    <!-- Spring Web / REST API -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
 
 
-    <!-- =====================================================
-         SPRING DATA JPA
-         ===================================================== -->
-
+    <!-- Spring Data JPA -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
 
 
-    <!-- =====================================================
-         H2 DATABASE
-         ===================================================== -->
-
+    <!-- H2 Database -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
@@ -79,17 +68,7 @@
     </dependency>
 
 
-    <!-- =====================================================
-         OPENCV
-
-         Used for:
-         - laptop webcam
-         - RTSP CCTV
-         - MP4 video
-         - reading video frames
-         - writing processed video
-         ===================================================== -->
-
+    <!-- OpenCV -->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>opencv-platform</artifactId>
@@ -97,14 +76,7 @@
     </dependency>
 
 
-    <!-- =====================================================
-         OPENAI
-
-         Used for:
-         - overall CCTV video description
-         - visual understanding of sampled frames
-         ===================================================== -->
-
+    <!-- OpenAI Java SDK -->
     <dependency>
       <groupId>com.openai</groupId>
       <artifactId>openai-java</artifactId>
@@ -112,10 +84,7 @@
     </dependency>
 
 
-    <!-- =====================================================
-         TESTING
-         ===================================================== -->
-
+    <!-- Testing -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
