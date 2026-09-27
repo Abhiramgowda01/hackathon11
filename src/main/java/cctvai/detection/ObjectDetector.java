@@ -20,104 +20,28 @@ public class ObjectDetector {
     private static final int INPUT_WIDTH = 640;
     private static final int INPUT_HEIGHT = 640;
 
-    private static final float CONFIDENCE_THRESHOLD = 0.40f;
+    private static final float CONFIDENCE_THRESHOLD = 0.30f;
     private static final float NMS_THRESHOLD = 0.45f;
 
     private static final String[] CLASS_NAMES = {
-            "person",
-            "bicycle",
-            "car",
-            "motorcycle",
-            "airplane",
-            "bus",
-            "train",
-            "truck",
-            "boat",
-            "traffic light",
-            "fire hydrant",
-            "stop sign",
-            "parking meter",
-            "bench",
-            //"bird",
-            "dog",
-            "horse",
-            "sheep",
-            "cow",
-            "elephant",
-            "bear",
-            "zebra",
-            "giraffe",
-            "backpack",
-            "umbrella",
-            "handbag",
-            "tie",
-            "suitcase",
-            "frisbee",
-            "skis",
-            "snowboard",
-            "sports ball",
-            "kite",
-            "baseball bat",
-            "baseball glove",
-            "skateboard",
-            "surfboard",
-            "tennis racket",
-            "bottle",
-            "wine glass",
-            "cup",
-            "fork",
-            "knife",
-            "spoon",
-            "bowl",
-            "banana",
-            "apple",
-            "sandwich",
-            "orange",
-            "broccoli",
-//            "carrot",
-//            "hot dog",
-//            "pizza",
-//            "donut",
-//            "cake",
-            "chair",
-            "couch",
-            "potted plant",
-//            "bed",
-//            "dining table",
-//            "toilet",
-            "tv",
-            "laptop",
-            "mouse",
-            "remote",
-            "keyboard",
-            "cell phone",
-//            "microwave",
-//            "oven",
-//            "toaster",
-//            "sink",
-//            "refrigerator",
-            "book",
-//            "clock",
-//            "vase",
-//            "scissors",
-//            "teddy bear",
-//            "hair drier",
-//            "toothbrush"
+            "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat",
+            "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
+            "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack",
+            "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball",
+            "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket",
+            "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
+            "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake",
+            "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop",
+            "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink",
+            "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"
     };
 
-
-    private static final List<String> TARGET_CLASSES = List.of(
-            "person"
-            //"bird",
-            //"cat",
-            //"dog",
-            //"horse",
-            //"sheep",
-            //"cow",
-            //"elephant",
-            //"bear",
-            //"zebra",
-            //"giraffe"
+    private static final java.util.Set<String> TARGET_CLASSES = java.util.Set.of(
+            "person", "bicycle", "car", "motorcycle", "bus", "truck",
+            "backpack", "handbag", "suitcase", "umbrella",
+            "knife", "baseball bat", "scissors", "bottle",
+            "cell phone", "laptop", "book",
+            "dog", "cat", "chair", "couch", "bench"
     );
 
     private final Net net;
@@ -474,6 +398,6 @@ public class ObjectDetector {
     }
 
     public List<String> getTargetClasses() {
-        return TARGET_CLASSES;
+        return new ArrayList<>(TARGET_CLASSES);
     }
 }

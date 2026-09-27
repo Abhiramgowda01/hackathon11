@@ -618,6 +618,45 @@
       background: var(--red);
     }
 
+    .activity-row.is-fighting::before {
+      background: #dc2626;
+      box-shadow: 0 0 14px rgba(220, 38, 38, 0.9);
+      animation: alertBlink 1.2s infinite ease-in-out;
+    }
+
+    .activity-row.is-fighting {
+      background: linear-gradient(90deg, rgba(220, 38, 38, 0.12), var(--panel));
+    }
+
+    .activity-row.is-crowd::before {
+      background: #a855f7;
+      box-shadow: 0 0 14px rgba(168, 85, 247, 0.9);
+    }
+
+    .activity-row.is-crowd {
+      background: linear-gradient(90deg, rgba(168, 85, 247, 0.10), var(--panel));
+    }
+
+    .activity-row.is-fallen::before {
+      background: #ef4444;
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.9);
+    }
+
+    .activity-row.is-running::before {
+      background: #ff5722;
+      box-shadow: 0 0 10px rgba(255, 87, 34, 0.7);
+    }
+
+    .activity-row.is-walking::before {
+      background: #00d2ff;
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.6);
+    }
+
+    .activity-row.is-hand::before {
+      background: #d946ef;
+      box-shadow: 0 0 10px rgba(217, 70, 239, 0.7);
+    }
+
     .activity-topline {
       display: flex;
       justify-content: space-between;
@@ -730,10 +769,46 @@
       padding: 14px;
       margin-bottom: 9px;
       position: relative;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .2s, border-color .2s;
+    }
+
+    .event:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.25);
     }
 
     .event.anomaly {
-      border-left: 3px solid var(--red);
+      border-left: 4px solid #ef4444;
+      background: linear-gradient(135deg, rgba(127,29,29,0.18), var(--panel));
+      box-shadow: 0 0 14px rgba(239,68,68,0.12);
+      animation: anomalyPulse 2.5s infinite ease-in-out;
+    }
+
+    .event.anomaly:hover {
+      box-shadow: 0 0 22px rgba(239,68,68,0.3);
+      border-color: #f87171;
+    }
+
+    @keyframes anomalyPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,0.10); }
+      50%      { box-shadow: 0 0 20px rgba(239,68,68,0.22); }
+    }
+
+    /* Normal events are hidden when anomaly-only filter is active */
+    .event.normal-event-hidden { display: none; }
+
+    .event .event-play-hint {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      font-size: 10px;
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .event:hover .event-play-hint {
+      opacity: 1;
     }
 
     .badge {
@@ -747,8 +822,79 @@
     }
 
     .badge.anomaly {
-      background: #432c2a;
-      color: #e67b73;
+      background: linear-gradient(135deg, #7f1d1d, #991b1b);
+      color: #fca5a5;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 8px rgba(239,68,68,0.3);
+    }
+
+    .badge.anomaly-type {
+      background: rgba(245,158,11,0.18);
+      color: #fbbf24;
+      font-weight: 700;
+      margin-left: 4px;
+      border-radius: 12px;
+      padding: 4px 9px;
+    }
+
+    .badge.anomaly-type.type-fighting {
+      background: linear-gradient(135deg, rgba(220,38,38,0.35), rgba(153,27,27,0.5));
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      animation: alertBlink 1.4s infinite ease-in-out;
+    }
+    .badge.anomaly-type.type-crowd {
+      background: linear-gradient(135deg, rgba(147,51,234,0.3), rgba(107,33,168,0.45));
+      color: #e9d5ff;
+      border: 1px solid #a855f7;
+    }
+    .badge.anomaly-type.type-running {
+      background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(180,83,9,0.4));
+      color: #fde68a;
+      border: 1px solid #f59e0b;
+    }
+    .badge.anomaly-type.type-fallen {
+      background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(185,28,28,0.5));
+      color: #fee2e2;
+      border: 1px solid #f87171;
+    }
+    .badge.anomaly-type.type-loitering {
+      background: linear-gradient(135deg, rgba(234,179,8,0.22), rgba(161,98,7,0.35));
+      color: #fef08a;
+      border: 1px solid #eab308;
+    }
+    .badge.anomaly-type.type-theft, .badge.anomaly-type.type-weapon {
+      background: linear-gradient(135deg, rgba(225,29,72,0.35), rgba(159,18,57,0.5));
+      color: #fecdd3;
+      border: 1px solid #f43f5e;
+      animation: alertBlink 1.4s infinite ease-in-out;
+    }
+
+    .event.anomaly.event-fighting {
+      border-left: 4px solid #ef4444;
+      background: linear-gradient(135deg, rgba(185,28,28,0.28), var(--panel));
+      box-shadow: 0 0 18px rgba(239,68,68,0.28);
+    }
+    .event.anomaly.event-crowd {
+      border-left: 4px solid #a855f7;
+      background: linear-gradient(135deg, rgba(126,34,206,0.26), var(--panel));
+      box-shadow: 0 0 18px rgba(168,85,247,0.25);
+    }
+    .event.anomaly.event-running {
+      border-left: 4px solid #f59e0b;
+      background: linear-gradient(135deg, rgba(180,83,9,0.22), var(--panel));
+      box-shadow: 0 0 16px rgba(245,158,11,0.2);
+    }
+    .event.anomaly.event-fallen {
+      border-left: 4px solid #dc2626;
+      background: linear-gradient(135deg, rgba(153,27,27,0.32), var(--panel));
+      box-shadow: 0 0 18px rgba(220,38,38,0.3);
+    }
+
+    @keyframes alertBlink {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.65; }
     }
 
     .event-meta {
@@ -770,6 +916,223 @@
       margin-top: 8px;
       color: var(--muted);
       font-size: 10px;
+    }
+
+    /* Anomaly filter chips bar */
+    .event-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .event-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s ease-in-out;
+    }
+
+    .event-filter-chip:hover {
+      background: rgba(255,255,255,0.08);
+      color: #e5e9ed;
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .event-filter-chip.active {
+      background: linear-gradient(135deg, rgba(239,68,68,0.22), rgba(185,28,28,0.3));
+      border-color: #ef4444;
+      color: #fca5a5;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(239,68,68,0.2);
+    }
+
+    .event-filter-chip[data-filter="FIGHTING"].active {
+      background: linear-gradient(135deg, rgba(220,38,38,0.3), rgba(153,27,27,0.4));
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .event-filter-chip[data-filter="CROWD"].active {
+      background: linear-gradient(135deg, rgba(147,51,234,0.28), rgba(107,33,168,0.38));
+      border-color: #a855f7;
+      color: #e9d5ff;
+      box-shadow: 0 0 10px rgba(168,85,247,0.2);
+    }
+
+    .event-filter-chip[data-filter="RUNNING"].active {
+      background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(180,83,9,0.35));
+      border-color: #f59e0b;
+      color: #fde68a;
+      box-shadow: 0 0 10px rgba(245,158,11,0.2);
+    }
+
+    .event-filter-chip[data-filter="ALL"].active {
+      background: rgba(59,130,246,0.2);
+      border-color: #3b82f6;
+      color: #93c5fd;
+      box-shadow: 0 0 10px rgba(59,130,246,0.2);
+    }
+
+    .event-filter-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    /* =====================================================
+       VIDEO MODAL OVERLAY
+       ===================================================== */
+    .video-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 16px;
+      padding: 28px;
+      animation: modalFadeIn 0.3s ease;
+    }
+    .video-modal-overlay.active {
+      display: flex;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .video-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 960px;
+    }
+    .video-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .video-modal-title .modal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .modal-badge.badge-fighting {
+      background: linear-gradient(135deg, rgba(220,38,38,0.4), rgba(153,27,27,0.6));
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      animation: alertBlink 1.4s infinite;
+    }
+    .modal-badge.badge-crowd {
+      background: linear-gradient(135deg, rgba(147,51,234,0.35), rgba(107,33,168,0.5));
+      color: #e9d5ff;
+      border: 1px solid #a855f7;
+    }
+    .modal-badge.badge-running {
+      background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(180,83,9,0.45));
+      color: #fde68a;
+      border: 1px solid #f59e0b;
+    }
+    .modal-badge.badge-fallen {
+      background: linear-gradient(135deg, rgba(239,68,68,0.4), rgba(185,28,28,0.55));
+      color: #fee2e2;
+      border: 1px solid #f87171;
+    }
+    .modal-badge.badge-alert {
+      background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(185,28,28,0.4));
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+    }
+    .video-modal-close {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #e5e9ed;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      transition: all .2s;
+    }
+    .video-modal-close:hover {
+      background: rgba(239,68,68,0.3);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+    .video-modal-video-wrap {
+      width: 100%;
+      max-width: 960px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .video-modal-video-wrap video {
+      width: 100%;
+      max-height: 70vh;
+      display: block;
+    }
+    .video-modal-context {
+      width: 100%;
+      max-width: 960px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .video-modal-context strong {
+      color: #e5e9ed;
+    }
+    .video-modal-context .ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .video-modal-context .ctx-sep {
+      width: 1px;
+      height: 16px;
+      background: rgba(255,255,255,0.12);
+    }
+
+    /* Suspicious activity glow effect on event cards */
+    .event.anomaly.event-fighting {
+      animation: fightPulse 1.8s infinite ease-in-out;
+    }
+    @keyframes fightPulse {
+      0%, 100% { box-shadow: 0 0 14px rgba(239,68,68,0.15); }
+      50%      { box-shadow: 0 0 28px rgba(239,68,68,0.4), inset 0 0 12px rgba(239,68,68,0.08); }
     }
 
     /* =====================================================
@@ -1052,6 +1415,255 @@
     .timeline-table th {
       color: var(--muted);
     }
+
+    /* =====================================================
+       LIVE EVENT STREAM & SECURITY VERDICT STYLES
+       ===================================================== */
+    .analysis-live-stream-box {
+      margin-top: 12px;
+      background: #0d1218;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .analysis-stream-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 7px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #93c5fd;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+      letter-spacing: 0.5px;
+    }
+
+    .stream-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 800;
+      animation: pulseLiveBadge 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseLiveBadge {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.96); }
+    }
+
+    .analysis-stream-feed {
+      max-height: 180px;
+      min-height: 80px;
+      overflow-y: auto;
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      scroll-behavior: smooth;
+    }
+
+    .analysis-stream-feed::-webkit-scrollbar {
+      width: 5px;
+    }
+    .analysis-stream-feed::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+
+    .stream-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 4px 8px;
+      background: rgba(30, 41, 59, 0.4);
+      border-radius: 4px;
+      border-left: 3px solid #3b82f6;
+      animation: slideInItem 0.2s ease;
+    }
+
+    .stream-item.level-SAFE {
+      border-left-color: #22c55e;
+    }
+    .stream-item.level-SUSPICIOUS {
+      border-left-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .stream-item.level-BREACH {
+      border-left-color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    @keyframes slideInItem {
+      from { opacity: 0; transform: translateX(-6px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .stream-time {
+      color: #94a3b8;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 42px;
+    }
+
+    .stream-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .stream-badge.badge-SAFE {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+    .stream-badge.badge-SUSPICIOUS {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+    }
+    .stream-badge.badge-BREACH {
+      background: rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
+    .stream-text {
+      color: #e2e8f0;
+      flex: 1;
+    }
+
+    .stream-empty-hint {
+      color: #64748b;
+      font-style: italic;
+      padding: 12px;
+      text-align: center;
+    }
+
+    /* Security Verdict Banner */
+    .security-verdict-card {
+      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .security-verdict-card.verdict-breach {
+      background: linear-gradient(135deg, rgba(127, 29, 29, 0.45), rgba(69, 10, 10, 0.35));
+      border: 1px solid #ef4444;
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
+      animation: alertPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.2); }
+      50% { box-shadow: 0 0 28px rgba(239, 68, 68, 0.45); }
+    }
+
+    .security-verdict-card.verdict-safe {
+      background: linear-gradient(135deg, rgba(20, 83, 45, 0.35), rgba(6, 78, 59, 0.25));
+      border: 1px solid #22c55e;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.15);
+    }
+
+    .verdict-banner-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .verdict-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .verdict-badge.badge-breach {
+      background: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.6);
+    }
+
+    .verdict-badge.badge-safe {
+      background: #16a34a;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(22, 163, 74, 0.5);
+    }
+
+    .verdict-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #f8fafc;
+      flex: 1;
+    }
+
+    .verdict-summary {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .verdict-meta-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .verdict-meta-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 10px;
+    }
+
+    .verdict-meta-label {
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .verdict-meta-val {
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-top: 2px;
+    }
+
+    .verdict-indicators {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .verdict-ind-item {
+      font-size: 11px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
 
     /* =====================================================
        RESPONSIVE
@@ -1702,7 +2314,7 @@
       <div>
 
         <div class="section-kicker">
-          RECENT ACTIVITY
+          SECURITY ALERTS
         </div>
 
         <div class="section-title">
@@ -1713,13 +2325,34 @@
 
     </div>
 
+    <div class="event-filter-bar">
+      <button class="event-filter-chip active" data-filter="ANOMALIES" onclick="setEventFilter('ANOMALIES', this)">
+        🛡️ All Alerts
+      </button>
+      <button class="event-filter-chip" data-filter="FIGHTING" onclick="setEventFilter('FIGHTING', this)">
+        🥊 Fighting
+      </button>
+      <button class="event-filter-chip" data-filter="CROWD" onclick="setEventFilter('CROWD', this)">
+        👥 Large Crowd Area
+      </button>
+      <button class="event-filter-chip" data-filter="RUNNING" onclick="setEventFilter('RUNNING', this)">
+        🏃 Running
+      </button>
+      <button class="event-filter-chip" data-filter="FALLEN" onclick="setEventFilter('FALLEN', this)">
+        ⚠️ Fallen / Other
+      </button>
+      <button class="event-filter-chip" data-filter="ALL" onclick="setEventFilter('ALL', this)">
+        Show All
+      </button>
+      <span class="event-filter-label" id="eventFilterLabel">
+        Showing all unusual / abnormal events
+      </span>
+    </div>
 
     <div id="eventList">
-
       <div class="empty">
         Loading events...
       </div>
-
     </div>
 
 
@@ -1799,12 +2432,36 @@
         </div>
 
         <div class="analysis-live-detections" id="analysisLiveDetections"></div>
+
+        <!-- Real-Time Play-by-Play Event Stream Feed -->
+        <div class="analysis-live-stream-box" id="analysisLiveStreamBox">
+          <div class="analysis-stream-header">
+            <span>📡 REAL-TIME PLAY-BY-PLAY EVENT STREAM (OBJECTS &amp; BEHAVIORS)</span>
+            <span class="stream-live-badge">LIVE STREAM</span>
+          </div>
+          <div class="analysis-stream-feed" id="analysisStreamFeed">
+            <div class="stream-empty-hint">Waiting for frames to process...</div>
+          </div>
+        </div>
       </div>
 
 
       <div
               class="video-results"
               id="videoResults">
+
+        <!-- Security Breach & Verdict Card -->
+        <div class="security-verdict-card" id="securityVerdictCard" style="display: none;">
+          <div class="verdict-banner-header" id="verdictBannerHeader">
+            <span class="verdict-badge" id="verdictBadge">SECURE</span>
+            <span class="verdict-title" id="verdictTitle">Normal Human Behavior &amp; Environment</span>
+          </div>
+          <div class="verdict-body">
+            <div class="verdict-summary" id="verdictSummary"></div>
+            <div class="verdict-meta-grid" id="verdictMetaGrid"></div>
+            <div class="verdict-indicators" id="verdictIndicators"></div>
+          </div>
+        </div>
 
         <h3>
           Video Information
@@ -1852,6 +2509,7 @@
             <tr>
               <th>Object</th>
               <th>ID</th>
+              <th>Observed Activity</th>
               <th>Start</th>
               <th>End</th>
               <th>Duration</th>
@@ -1868,6 +2526,7 @@
         </div>
 
       </div>
+
 
     </section>
 
@@ -2518,136 +3177,82 @@
 
 
                       let icon = "👁️";
+                      const lower = activityName.toLowerCase();
 
-                      const lower =
-                              activityName
-                                      .toLowerCase();
-
-
-                      if (
-                              lower.includes("walk")
-                      ) {
+                      if (lower.includes("fight") || lower.includes("brawl") || lower.includes("assault") || lower.includes("altercat")) {
+                        icon = "🥊";
+                      } else if (lower.includes("crowd") || lower.includes("gather")) {
+                        icon = "👥";
+                      } else if (lower.includes("hand") || lower.includes("wave") || lower.includes("gesture")) {
+                        icon = "👋";
+                      } else if (lower.includes("walk")) {
                         icon = "🚶";
-                      }
-
-                      else if (
-                              lower.includes("run")
-                      ) {
+                      } else if (lower.includes("run") || lower.includes("sprint") || lower.includes("flee")) {
                         icon = "🏃";
-                      }
-
-                      else if (
-                              lower.includes("sit")
-                      ) {
+                      } else if (lower.includes("sit")) {
                         icon = "🪑";
-                      }
-
-                      else if (
-                              lower.includes("stand")
-                      ) {
+                      } else if (lower.includes("stand")) {
                         icon = "🧍";
-                      }
-
-                      else if (
-                              lower.includes("fall")
-                      ) {
+                      } else if (lower.includes("fall")) {
                         icon = "⚠️";
+                      } else if (lower.includes("loiter")) {
+                        icon = "⏱️";
                       }
 
+                      let stateClass = "";
+                      if (lower.includes("fight") || lower.includes("brawl") || lower.includes("assault")) {
+                        stateClass = "is-fighting";
+                      } else if (lower.includes("crowd") || lower.includes("gather")) {
+                        stateClass = "is-crowd";
+                      } else if (lower.includes("fall")) {
+                        stateClass = "is-fallen";
+                      } else if (lower.includes("run") || lower.includes("sprint") || lower.includes("flee")) {
+                        stateClass = "is-running";
+                      } else if (lower.includes("walk")) {
+                        stateClass = "is-walking";
+                      } else if (lower.includes("hand") || lower.includes("wave") || lower.includes("gesture")) {
+                        stateClass = "is-hand";
+                      }
+
+                      const speed = Number(activity.speed || 0);
+                      const handEnergy = Number(activity.handMovementEnergy || 0);
+                      const alertMsg = activity.alertMessage || "";
+                      const alertHtml = alertMsg ? `<div class="activity-alert-box" style="margin-top:8px;font-size:11px;color:#fca5a5;background:rgba(220,38,38,0.18);padding:5px 9px;border-radius:6px;border-left:3px solid #ef4444;"><strong>⚠ ALERT:</strong> ${escapeHtml(alertMsg)}</div>` : "";
 
                       return `
-
-                    <article
-                        class="activity-row ${
-                              anomaly
-                                      ? "is-anomaly"
-                                      : ""
-                      }">
-
-                        <div
-                            class="activity-topline">
-
-                            <div
-                                class="activity-object">
-
-                                ${escapeHtml(
-                              objectType
-                      )}
-
-                                #${escapeHtml(
-                              String(
-                                      objectId
-                              )
-                      )}
-
+                    <article class="activity-row ${anomaly ? "is-anomaly" : ""} ${stateClass}">
+                        <div class="activity-topline">
+                            <div class="activity-object">
+                                ${escapeHtml(objectType)} #${escapeHtml(String(objectId))}
                             </div>
-
-
-                            <div
-                                class="activity-time">
-
-                                ${escapeHtml(
-                              activityTime
-                      )}
-
+                            <div class="activity-time">
+                                ${escapeHtml(activityTime)}
                             </div>
-
                         </div>
 
-
-                        <div
-                            class="activity-action">
-
-                            <span
-                                class="activity-icon">
-                                ${icon}
-                            </span>
-
-                            <span>
-                                ${escapeHtml(
-                              activityName
-                      )}
-                            </span>
-
+                        <div class="activity-action">
+                            <span class="activity-icon">${icon}</span>
+                            <span>${escapeHtml(activityName)}</span>
                         </div>
+                        ${alertHtml}
 
+                        <div class="activity-info">
+                            <span>
+                                Confidence: <strong>${confidence.toFixed(1)}%</strong>
+                            </span>
 
-                        <div
-                            class="activity-info">
+                            ${speed > 0 ? `<span>Speed: <strong>${Math.round(speed)} px/s</strong></span>` : ""}
+                            ${handEnergy > 0 ? `<span>Hand Motion: <strong>${Math.round(handEnergy * 100)}%</strong></span>` : ""}
 
                             <span>
-                                Confidence:
-                                <strong>
-                                    ${confidence.toFixed(1)}%
-                                </strong>
+                                Stationary: <strong>${stationarySeconds}s</strong>
                             </span>
 
-                            <span>
-                                Stationary:
-                                <strong>
-                                    ${stationarySeconds}s
-                                </strong>
+                            <span class="${anomaly ? "activity-anomaly" : "activity-normal"}">
+                                ${anomaly ? "⚠ ANOMALY" : "✓ NORMAL"}
                             </span>
-
-                            <span
-                                class="${
-                              anomaly
-                                      ? "activity-anomaly"
-                                      : "activity-normal"
-                      }">
-
-                                ${
-                              anomaly
-                                      ? "⚠ ANOMALY"
-                                      : "✓ NORMAL"
-                      }
-
-                            </span>
-
                         </div>
-
                     </article>
-
                 `;
 
                     })
@@ -2778,80 +3383,97 @@
 
 
   /* =====================================================
-     RENDER EVENTS
+     RENDER EVENTS & MULTI-CATEGORY FILTERING
      ===================================================== */
 
-  function renderEvents(
-          events
-  ) {
+  let currentEventFilter = "ANOMALIES"; /* default: only show abnormal events */
 
-    const list =
-            document.getElementById(
-                    "eventList"
-            );
+  function setEventFilter(filterType, btn) {
+    currentEventFilter = filterType;
+    document.querySelectorAll(".event-filter-chip").forEach(c => c.classList.remove("active"));
+    if (btn) btn.classList.add("active");
 
-
-    if (
-            !Array.isArray(events)
-    ) {
-
-      events = [];
-
+    const label = document.getElementById("eventFilterLabel");
+    if (label) {
+      if (filterType === "ANOMALIES") label.textContent = "Showing all unusual / abnormal events";
+      else if (filterType === "FIGHTING") label.textContent = "Showing fighting & altercation events";
+      else if (filterType === "CROWD") label.textContent = "Showing large crowd area & congregation events";
+      else if (filterType === "RUNNING") label.textContent = "Showing running & sprint events";
+      else if (filterType === "FALLEN") label.textContent = "Showing fallen, collapse & loitering alerts";
+      else if (filterType === "ALL") label.textContent = "Showing all logged events (normal + abnormal)";
     }
 
+    applyEventFilter();
+  }
 
-    document.getElementById(
-            "statTotal"
-    ).textContent =
-            events.length;
+  function applyEventFilter() {
+    document.querySelectorAll("#eventList .event").forEach(el => {
+      let show = false;
+      const isAnomaly = el.classList.contains("anomaly");
+      if (currentEventFilter === "ALL") {
+        show = true;
+      } else if (currentEventFilter === "ANOMALIES") {
+        show = isAnomaly;
+      } else if (currentEventFilter === "FIGHTING") {
+        show = el.classList.contains("event-fighting");
+      } else if (currentEventFilter === "CROWD") {
+        show = el.classList.contains("event-crowd");
+      } else if (currentEventFilter === "RUNNING") {
+        show = el.classList.contains("event-running");
+      } else if (currentEventFilter === "FALLEN") {
+        show = el.classList.contains("event-fallen") || el.querySelector(".type-loitering") !== null;
+      }
 
+      if (show) {
+        el.classList.remove("normal-event-hidden");
+      } else {
+        el.classList.add("normal-event-hidden");
+      }
+    });
+  }
 
-    document.getElementById(
-            "statTotalTop"
-    ).textContent =
-            events.length;
+  function toggleAnomalyFilter() {
+    const nextFilter = currentEventFilter === "ALL" ? "ANOMALIES" : "ALL";
+    const btn = document.querySelector(`.event-filter-chip[data-filter="${nextFilter}"]`);
+    setEventFilter(nextFilter, btn);
+  }
 
+  function renderEvents(events) {
 
-    const anomalies =
-            events.filter(
-                    event =>
-                            event.anomaly === true
-            ).length;
+    const list = document.getElementById("eventList");
 
+    if (!Array.isArray(events)) {
+      events = [];
+    }
 
-    document.getElementById(
-            "statAnomalies"
-    ).textContent =
-            anomalies;
+    document.getElementById("statTotal").textContent = events.length;
+    document.getElementById("statTotalTop").textContent = events.length;
 
+    const anomalies = events.filter(e => e.anomaly === true || Boolean(classifyAnomalyType(e.description))).length;
+    document.getElementById("statAnomalies").textContent = anomalies;
+    document.getElementById("statAnomaliesTop").textContent = anomalies;
 
-    document.getElementById(
-            "statAnomaliesTop"
-    ).textContent =
-            anomalies;
-
-
-    if (
-            events.length === 0
-    ) {
-
-      list.innerHTML = `
-            <div class="empty">
-                No events yet.
-            </div>
-        `;
-
+    if (events.length === 0) {
+      list.innerHTML = '<div class="empty">No events yet.</div>';
       return;
     }
 
+    if (currentEventFilter === "ANOMALIES" && anomalies === 0) {
+      list.innerHTML = `
+        <div class="empty" style="padding: 28px 16px; text-align: center; border: 1px dashed var(--border); border-radius: 8px; background: rgba(255,255,255,0.02);">
+          <div style="font-size: 24px; margin-bottom: 8px;">🛡️</div>
+          <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">All Activity Normal</div>
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">No unusual or abnormal security events detected in latest activity.</div>
+          <button type="button" class="btn secondary" onclick="setEventFilter('ALL', document.querySelector('.event-filter-chip[data-filter=\\'ALL\\']'))" style="font-size: 12px; padding: 6px 14px; cursor: pointer;">Show All ${events.length} Events</button>
+        </div>`;
+      return;
+    }
 
-    list.innerHTML =
-            events
-                    .map(
-                            renderSingleEvent
-                    )
-                    .join("");
+    list.innerHTML = events
+            .map(renderSingleEvent)
+            .join("");
 
+    applyEventFilter();
   }
 
 
@@ -2859,188 +3481,282 @@
      SINGLE EVENT
      ===================================================== */
 
-  function renderSingleEvent(
-          event
-  ) {
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
-    const objectType =
-            event.objectType ||
-            "Unknown";
+  function classifyAnomalyInfo(description, behaviorType) {
+    /* Prefer the structured behaviorType from the API if available */
+    if (behaviorType) {
+      const bt = behaviorType.toUpperCase();
+      if (bt === "FIGHTING") return { type: "FIGHTING", label: "🥊 SUSPICIOUS: FIGHTING", cssClass: "type-fighting", cardClass: "event-fighting" };
+      if (bt === "CROWD_GATHERING" || bt.includes("CROWD")) return { type: "CROWD GATHERING", label: "👥 SUSPICIOUS: LARGE CROWD AREA", cssClass: "type-crowd", cardClass: "event-crowd" };
+      if (bt === "RUNNING") return { type: "RUNNING", label: "🏃 SUSPICIOUS: RUNNING", cssClass: "type-running", cardClass: "event-running" };
+      if (bt === "FALLEN") return { type: "FALLEN", label: "⚠️ FALLEN / COLLAPSE", cssClass: "type-fallen", cardClass: "event-fallen" };
+      if (bt === "LOITERING") return { type: "LOITERING", label: "⏱️ SUSPICIOUS: LOITERING", cssClass: "type-loitering", cardClass: "event-loitering" };
+      if (bt === "SPEEDING") return { type: "SPEEDING", label: "🚗 SPEEDING", cssClass: "type-running", cardClass: "event-running" };
+    }
+    /* Fallback: parse from description */
+    if (!description) return null;
+    const d = description.toUpperCase();
+    if (d.includes("FIGHT") || d.includes("BRAWL") || d.includes("ASSAULT") || d.includes("ALTERCATION")) {
+      return { type: "FIGHTING", label: "🥊 SUSPICIOUS: FIGHTING", cssClass: "type-fighting", cardClass: "event-fighting" };
+    }
+    if (d.includes("CROWD") || d.includes("GATHERING") || d.includes("CONGREGAT")) {
+      return { type: "CROWD GATHERING", label: "👥 SUSPICIOUS: LARGE CROWD AREA", cssClass: "type-crowd", cardClass: "event-crowd" };
+    }
+    if (d.includes("RUNNING") || d.includes("SPRINT") || d.includes("FAST") || d.includes("FLEE")) {
+      return { type: "RUNNING", label: "🏃 SUSPICIOUS: RUNNING", cssClass: "type-running", cardClass: "event-running" };
+    }
+    if (d.includes("FALLEN") || d.includes("COLLAPSE")) {
+      return { type: "FALLEN", label: "⚠️ FALLEN / COLLAPSE", cssClass: "type-fallen", cardClass: "event-fallen" };
+    }
+    if (d.includes("LOITERING")) {
+      return { type: "LOITERING", label: "⏱️ SUSPICIOUS: LOITERING", cssClass: "type-loitering", cardClass: "event-loitering" };
+    }
+    if (d.includes("SNATCH") || d.includes("ROBBERY") || d.includes("MUGGING")) {
+      return { type: "THEFT", label: "🚨 SNATCHING / ROBBERY", cssClass: "type-theft", cardClass: "event-theft" };
+    }
+    if (d.includes("WEAPON") || d.includes("ARMED") || d.includes("KNIFE") || d.includes("GUN")) {
+      return { type: "WEAPON", label: "🔪 ARMED WEAPON", cssClass: "type-weapon", cardClass: "event-theft" };
+    }
+    if (d.includes("INTRUSION") || d.includes("BREACH") || d.includes("TRESPASS")) {
+      return { type: "INTRUSION", label: "🚨 INTRUSION", cssClass: "type-theft", cardClass: "event-theft" };
+    }
+    return null;
+  }
 
+  function classifyAnomalyType(description, behaviorType) {
+    const info = classifyAnomalyInfo(description, behaviorType);
+    return info ? info.type : "";
+  }
+
+  function renderSingleEvent(event) {
+
+    const objectType = event.objectType || "Unknown";
 
     const objectId =
-            event.objectId !== null &&
-            event.objectId !== undefined
+            event.objectId !== null && event.objectId !== undefined
                     ? `#${event.objectId}`
                     : "";
 
+    const cameraId = event.cameraId || "Unknown camera";
 
-    const cameraId =
-            event.cameraId ||
-            "Unknown camera";
+    const rawStart = event.startTime || event.timestamp;
 
+    const startTime = rawStart
+            ? new Date(rawStart).toLocaleString()
+            : "Unknown time";
 
-    const rawStart =
-            event.startTime ||
-            event.timestamp;
+    const endTime = event.endTime
+            ? new Date(event.endTime).toLocaleString()
+            : "Still active";
 
-
-    const startTime =
-            rawStart
-                    ? new Date(
-                            rawStart
-                    ).toLocaleString()
-                    : "Unknown time";
-
-
-    const endTime =
-            event.endTime
-                    ? new Date(
-                            event.endTime
-                    ).toLocaleString()
-                    : "Still active";
-
-
-    let durationText =
-            "Active";
-
-
-    if (
-            event.startTime &&
-            event.endTime
-    ) {
-
-      const start =
-              new Date(
-                      event.startTime
-              ).getTime();
-
-
-      const end =
-              new Date(
-                      event.endTime
-              ).getTime();
-
-
-      const seconds =
-              Math.max(
-                      0,
-                      Math.round(
-                              (end - start) / 1000
-                      )
-              );
-
-
-      durationText =
-              `${seconds} second${
-                      seconds === 1
-                              ? ""
-                              : "s"
-              }`;
-
+    let durationText = "Active";
+    if (event.startTime && event.endTime) {
+      const start = new Date(event.startTime).getTime();
+      const end = new Date(event.endTime).getTime();
+      const seconds = Math.max(0, Math.round((end - start) / 1000));
+      durationText = `${seconds} second${seconds === 1 ? "" : "s"}`;
     }
 
+    const description = event.description || `${objectType} ${objectId} detected`;
+    const anomalyInfo = classifyAnomalyInfo(description, event.behaviorType);
+    const anomaly = event.anomaly === true || Boolean(anomalyInfo);
+    const anomalyBadgeLabel = anomalyInfo ? anomalyInfo.label : (anomaly ? "⚠️ SUSPICIOUS ACTIVITY" : "");
+    const anomalyCssClass = anomalyInfo ? anomalyInfo.cssClass : "";
+    const cardExtraClass = anomalyInfo ? " " + anomalyInfo.cardClass : "";
 
-    const anomaly =
-            event.anomaly === true;
+    /* Build anomaly type badge */
+    const anomalyTypeBadge = anomalyBadgeLabel
+            ? `<span class="badge anomaly-type ${anomalyCssClass}">${escapeHtml(anomalyBadgeLabel)}</span>`
+            : "";
 
+    /* Determine visibility based on currentEventFilter */
+    let isHidden = false;
+    if (currentEventFilter === "ANOMALIES" && !anomaly) isHidden = true;
+    else if (currentEventFilter === "FIGHTING" && (!anomalyInfo || anomalyInfo.type !== "FIGHTING")) isHidden = true;
+    else if (currentEventFilter === "CROWD" && (!anomalyInfo || anomalyInfo.type !== "CROWD GATHERING")) isHidden = true;
+    else if (currentEventFilter === "RUNNING" && (!anomalyInfo || anomalyInfo.type !== "RUNNING")) isHidden = true;
+    else if (currentEventFilter === "FALLEN" && (!anomalyInfo || (anomalyInfo.type !== "FALLEN" && anomalyInfo.type !== "LOITERING"))) isHidden = true;
+    const hiddenClass = isHidden ? " normal-event-hidden" : "";
 
-    const description =
-            event.description ||
-            `${objectType} ${objectId} detected`;
-
+    /* Raw ISO timestamp for video matching */
+    const rawTimestamp = rawStart || "";
+    const bType = anomalyInfo ? anomalyInfo.type : (event.behaviorType || (anomaly ? "SUSPICIOUS" : "NORMAL"));
 
     return `
-
         <article
-            class="event ${
-            anomaly
-                    ? "anomaly"
-                    : ""
-    }">
+            class="event ${anomaly ? "anomaly" : ""}${cardExtraClass}${hiddenClass}"
+            data-timestamp="${escapeHtml(String(rawTimestamp))}"
+            data-camera="${escapeHtml(String(cameraId))}"
+            data-behaviortype="${escapeHtml(String(bType))}"
+            data-description="${escapeHtml(String(description))}"
+            data-label="${escapeHtml(String(objectType + ' ' + objectId))}"
+            onclick="playEventVideo(this.dataset.timestamp, this.dataset.camera, this.dataset.behaviortype, this.dataset.description, this.dataset.label)"
+            title="Click to view surveillance video footage for this event"
+        >
 
-            <span
-                class="badge ${
-            anomaly
-                    ? "anomaly"
-                    : ""
-    }">
+            <span class="event-play-hint">&#9654; View Footage</span>
 
-                ${
-            anomaly
-                    ? "UNUSUAL"
-                    : "usual"
-    }
-
+            <span class="badge ${anomaly ? "anomaly" : ""}">
+                ${anomaly ? "&#9888; SUSPICIOUS ACTIVITY" : "Normal"}
             </span>
+            ${anomalyTypeBadge}
 
-
-            <div
-                class="event-meta">
-
+            <div class="event-meta">
                 <strong>
-                    ${escapeHtml(
-            objectType
-    )}
-
-                    ${escapeHtml(
-            objectId
-    )}
+                    ${escapeHtml(objectType)}
+                    ${escapeHtml(objectId)}
                 </strong>
-
-                ·
-
-                ${escapeHtml(
-            cameraId
-    )}
-
-                ·
-
-                ${escapeHtml(
-            startTime
-    )}
-
+                &middot;
+                ${escapeHtml(cameraId)}
+                &middot;
+                ${escapeHtml(startTime)}
             </div>
 
-
-            <div
-                class="event-desc">
-
-                ${escapeHtml(
-            description
-    )}
-
+            <div class="event-desc">
+                ${escapeHtml(description)}
             </div>
 
-
-            <div
-                class="event-details">
-
-                Start:
-                ${escapeHtml(
-            startTime
-    )}
-
+            <div class="event-details">
+                Start: ${escapeHtml(startTime)}
                 &nbsp; | &nbsp;
-
-                End:
-                ${escapeHtml(
-            endTime
-    )}
-
+                End: ${escapeHtml(endTime)}
                 &nbsp; | &nbsp;
-
-                Duration:
-                ${escapeHtml(
-            durationText
-    )}
-
+                Duration: ${escapeHtml(durationText)}
             </div>
 
         </article>
-
     `;
+  }
 
+
+  /* =====================================================
+     PLAY EVENT VIDEO & MODAL CONTROLS
+     When a user clicks an event, find the matching
+     recorded surveillance video and play it in a focused
+     surveillance viewer modal overlay.
+     ===================================================== */
+
+  function closeVideoModal() {
+    const modal = document.getElementById("videoModal");
+    const player = document.getElementById("videoModalPlayer");
+    if (player) {
+      player.pause();
+      player.removeAttribute("src");
+      player.load();
+    }
+    if (modal) {
+      modal.classList.remove("active");
+    }
+  }
+
+  async function playEventVideo(eventTimestamp, cameraId, behaviorType, description, label) {
+    if (!eventTimestamp) {
+      alert("No timestamp available for this event.");
+      return;
+    }
+
+    /* Modal elements */
+    const modal = document.getElementById("videoModal");
+    const modalPlayer = document.getElementById("videoModalPlayer");
+    const modalTitle = document.getElementById("videoModalTitle");
+    const modalCamera = document.getElementById("videoModalCamera");
+    const modalTime = document.getElementById("videoModalTime");
+    const modalActivity = document.getElementById("videoModalActivity");
+
+    /* Also keep inline player synced */
+    const inlinePlayer = document.getElementById("recordingPlayer");
+    const inlineWrap = document.getElementById("recordingPlayerWrap");
+
+    /* Format behavior indicator badge */
+    const bt = String(behaviorType || "").toUpperCase();
+    let badgeHtml = "";
+    if (bt.includes("FIGHT")) {
+      badgeHtml = `<span class="modal-badge badge-fighting">&#129354; SUSPICIOUS: FIGHTING</span>`;
+    } else if (bt.includes("CROWD")) {
+      badgeHtml = `<span class="modal-badge badge-crowd">&#128101; SUSPICIOUS: CROWD GATHERING</span>`;
+    } else if (bt.includes("RUNNING") || bt.includes("SPRINT")) {
+      badgeHtml = `<span class="modal-badge badge-running">&#127939; SUSPICIOUS: RUNNING</span>`;
+    } else if (bt.includes("FALLEN")) {
+      badgeHtml = `<span class="modal-badge badge-fallen">&#9888; SUSPICIOUS: FALLEN / COLLAPSE</span>`;
+    } else if (bt !== "NORMAL" && bt !== "") {
+      badgeHtml = `<span class="modal-badge badge-alert">&#9888; SUSPICIOUS ACTIVITY</span>`;
+    }
+
+    if (modalTitle) {
+      modalTitle.innerHTML = `${badgeHtml} <span>Surveillance Incident Footage</span>`;
+    }
+    if (modalCamera) modalCamera.textContent = cameraId || "CCTV Camera";
+    if (modalTime) {
+      try { modalTime.textContent = new Date(eventTimestamp).toLocaleString(); }
+      catch (_) { modalTime.textContent = eventTimestamp; }
+    }
+    if (modalActivity) {
+      modalActivity.innerHTML = `<strong>${escapeHtml(label || "")}</strong>: ${escapeHtml(description || behaviorType || "Suspicious Activity")}`;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        timestamp: eventTimestamp,
+        cameraId: cameraId || ""
+      });
+
+      const response = await fetch(
+              `${API_BASE}/recordings/match?${params.toString()}`,
+              { cache: "no-store" }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.found || !data.url) {
+        alert(data.message || "No recorded surveillance clip found on disk for this event timestamp.\\n(Clips are recorded automatically while CCTV cameras run with recording enabled).");
+        return;
+      }
+
+      const videoUrl = API_BASE + data.url;
+      const offset = Number(data.offsetSeconds) || 0;
+
+      /* Setup and show modal overlay */
+      if (modal && modalPlayer) {
+        modal.classList.add("active");
+        modalPlayer.src = videoUrl;
+        modalPlayer.onloadedmetadata = function () {
+          if (offset > 0 && offset < modalPlayer.duration) {
+            modalPlayer.currentTime = offset;
+          }
+          modalPlayer.play().catch(() => {});
+        };
+        modalPlayer.load();
+      }
+
+      /* Also sync inline recording player */
+      if (inlinePlayer && inlineWrap) {
+        inlineWrap.style.display = "block";
+        inlinePlayer.src = videoUrl;
+        inlinePlayer.onloadedmetadata = function () {
+          if (offset > 0 && offset < inlinePlayer.duration) {
+            inlinePlayer.currentTime = offset;
+          }
+        };
+        inlinePlayer.load();
+      }
+
+    } catch (err) {
+      console.error("Error playing event video:", err);
+      alert("Could not load surveillance recording for this event.\\n" + err.message);
+    }
   }
 
 
@@ -3160,6 +3876,7 @@
             const progressTime = document.getElementById("analysisProgressTime");
             const progressEvents = document.getElementById("analysisProgressEvents");
             const liveDetections = document.getElementById("analysisLiveDetections");
+            const streamFeed = document.getElementById("analysisStreamFeed");
 
             // Reset progress UI
             if (progressContainer) progressContainer.style.display = "block";
@@ -3167,22 +3884,30 @@
             if (progressPercent) {
               progressPercent.textContent = "5%";
               progressPercent.style.color = "#22c55e";
+              progressPercent.style.background = "rgba(34, 197, 94, 0.12)";
+              progressPercent.style.borderColor = "rgba(34, 197, 94, 0.3)";
             }
             if (progressBarFill) {
               progressBarFill.style.width = "5%";
               progressBarFill.style.background = "linear-gradient(90deg, #16a34a, #22c55e, #4ade80)";
+              progressBarFill.style.boxShadow = "0 0 10px rgba(34, 197, 94, 0.5)";
             }
             if (progressText) progressText.textContent = "Uploading video to server...";
             if (progressFrames) progressFrames.textContent = "Processing upload...";
             if (progressTime) progressTime.textContent = "--:-- / --:--";
             if (progressEvents) progressEvents.textContent = "0 events found";
             if (liveDetections) liveDetections.innerHTML = "";
+            if (streamFeed) {
+              streamFeed.innerHTML = '<div class="stream-empty-hint">Waiting for frames to process...</div>';
+            }
 
             videoStatus.textContent = "Analysis in progress...";
             videoResults.style.display = "none";
 
             const formData = new FormData();
             formData.append("file", file);
+
+            let lastEventCount = 0;
 
             // Start polling progress every 350ms
             let progressPoller = setInterval(async () => {
@@ -3209,12 +3934,45 @@
                         `<span class="analysis-live-chip">${escapeHtml(obj)}</span>`
                       ).join("");
                     }
+
+                    // Real-Time Play-by-Play Event Stream Feed
+                    if (Array.isArray(p.liveEvents) && p.liveEvents.length > 0 && streamFeed) {
+                      if (p.liveEvents.length !== lastEventCount) {
+                        lastEventCount = p.liveEvents.length;
+                        streamFeed.innerHTML = p.liveEvents.map(ev => {
+                          const levelClass = escapeHtml(ev.level || 'SAFE');
+                          const badgeClass = escapeHtml(ev.badge || 'DETECTED');
+                          return `
+                            <div class="stream-item level-${levelClass}">
+                              <span class="stream-time">[${escapeHtml(ev.time || '00:00')}]</span>
+                              <span class="stream-badge badge-${levelClass}">${badgeClass}</span>
+                              <span class="stream-text">${escapeHtml(ev.text || '')}</span>
+                            </div>
+                          `;
+                        }).join('');
+                        streamFeed.scrollTop = streamFeed.scrollHeight;
+                      }
+                    }
+
+                    // Dynamic alert response if breach flagged during video analysis
+                    if (p.isSecurityBreach) {
+                      if (progressPercent) {
+                        progressPercent.style.color = "#f87171";
+                        progressPercent.style.background = "rgba(239, 68, 68, 0.2)";
+                        progressPercent.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                      }
+                      if (progressBarFill) {
+                        progressBarFill.style.background = "linear-gradient(90deg, #b91c1c, #ef4444, #f87171)";
+                        progressBarFill.style.boxShadow = "0 0 12px rgba(239, 68, 68, 0.6)";
+                      }
+                    }
                   }
                 }
               } catch (pollErr) {
                 // Ignore transient network hiccups during polling
               }
             }, 350);
+
 
             try {
 
@@ -3256,6 +4014,10 @@
 
               // Smoothly scroll down to see the result
               videoResults.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+              // Auto-refresh events and recordings so newly found suspicious activities appear in Events worth a look
+              loadEvents();
+              loadAllRecordings();
 
             } catch (error) {
 
@@ -3300,89 +4062,127 @@
           result
   ) {
 
+    // ── 1. SECURITY VERDICT BANNER ──
+    const verdictCard = document.getElementById("securityVerdictCard");
+    const verdictBadge = document.getElementById("verdictBadge");
+    const verdictTitle = document.getElementById("verdictTitle");
+    const verdictSummary = document.getElementById("verdictSummary");
+    const verdictMetaGrid = document.getElementById("verdictMetaGrid");
+    const verdictIndicators = document.getElementById("verdictIndicators");
+
+    if (verdictCard) {
+      verdictCard.style.display = "block";
+      const isBreach = !!result.is_security_breach;
+      const incident = result.security_incident || {};
+
+      if (isBreach) {
+        verdictCard.className = "security-verdict-card verdict-breach";
+        if (verdictBadge) {
+          verdictBadge.className = "verdict-badge badge-breach";
+          verdictBadge.textContent = "⛔ SECURITY BREACH CONFIRMED";
+        }
+        if (verdictTitle) {
+          verdictTitle.textContent = incident.verdict_title || (result.security_verdict || "SECURITY BREACH DETECTED");
+        }
+        if (verdictSummary) {
+          verdictSummary.textContent = incident.summary || "High-threat or anomalous security incident detected in surveillance footage.";
+        }
+      } else {
+        verdictCard.className = "security-verdict-card verdict-safe";
+        if (verdictBadge) {
+          verdictBadge.className = "verdict-badge badge-safe";
+          verdictBadge.textContent = "🛡️ SECURE — NORMAL ROUTINE";
+        }
+        if (verdictTitle) {
+          verdictTitle.textContent = "Normal Human Behaviors & Secure Environment";
+        }
+        if (verdictSummary) {
+          verdictSummary.textContent = "All detected human behaviors are within normal routine parameters. No robbery, chain snatching, kidnapping, assault, or suspicious flee patterns observed.";
+        }
+      }
+
+      if (verdictMetaGrid) {
+        const severity = incident.severity || (isBreach ? "WARNING" : "SAFE");
+        const breachType = incident.breach_type || (isBreach ? "SUSPICIOUS_BEHAVIOR" : "NORMAL_ROUTINE");
+        const confidence = incident.confidence ? Math.round(incident.confidence * 100) + "%" : (isBreach ? "85%" : "95%");
+        const suspects = Array.isArray(incident.suspect_ids) && incident.suspect_ids.length > 0 ? incident.suspect_ids.map(id => "#" + id).join(", ") : "None";
+        const victims = Array.isArray(incident.victim_ids) && incident.victim_ids.length > 0 ? incident.victim_ids.map(id => "#" + id).join(", ") : "None";
+
+        verdictMetaGrid.innerHTML = `
+          <div class="verdict-meta-item">
+            <div class="verdict-meta-label">Breach Classification</div>
+            <div class="verdict-meta-val">${escapeHtml(breachType)}</div>
+          </div>
+          <div class="verdict-meta-item">
+            <div class="verdict-meta-label">Threat Severity</div>
+            <div class="verdict-meta-val" style="color:${isBreach ? '#f87171' : '#4ade80'}">${escapeHtml(severity)}</div>
+          </div>
+          <div class="verdict-meta-item">
+            <div class="verdict-meta-label">AI Confidence</div>
+            <div class="verdict-meta-val">${escapeHtml(confidence)}</div>
+          </div>
+          ${isBreach ? `
+          <div class="verdict-meta-item">
+            <div class="verdict-meta-label">Suspect IDs</div>
+            <div class="verdict-meta-val" style="color:#fca5a5">${escapeHtml(suspects)}</div>
+          </div>
+          <div class="verdict-meta-item">
+            <div class="verdict-meta-label">Victim IDs</div>
+            <div class="verdict-meta-val" style="color:#93c5fd">${escapeHtml(victims)}</div>
+          </div>` : ''}
+        `;
+      }
+
+      if (verdictIndicators) {
+        const inds = Array.isArray(incident.key_indicators) ? incident.key_indicators : [];
+        if (inds.length > 0) {
+          verdictIndicators.innerHTML = inds.map(ind =>
+            `<div class="verdict-ind-item"><span>${isBreach ? '⚠️' : '✓'}</span> <span>${escapeHtml(ind)}</span></div>`
+          ).join('');
+        } else {
+          verdictIndicators.innerHTML = `<div class="verdict-ind-item"><span>${isBreach ? '⚠️' : '✓'}</span> <span>${isBreach ? 'High velocity convergence and rapid flee detected' : 'Standard velocity trajectory and normal interactions observed'}</span></div>`;
+        }
+      }
+    }
+
     const information =
             document.getElementById(
                     "videoInformation"
             );
-
 
     const duration =
             formatSeconds(
                     result.duration_seconds
             );
 
-
     information.innerHTML = `
-
         <div class="video-info-card">
-
-            <div class="video-info-label">
-                Filename
-            </div>
-
-            <div class="video-info-value">
-                ${escapeHtml(
-            result.filename
-    )}
-            </div>
-
+            <div class="video-info-label">Filename</div>
+            <div class="video-info-value">${escapeHtml(result.filename)}</div>
         </div>
-
-
         <div class="video-info-card">
-
-            <div class="video-info-label">
-                Duration
-            </div>
-
-            <div class="video-info-value">
-                ${duration}
-            </div>
-
+            <div class="video-info-label">Duration</div>
+            <div class="video-info-value">${duration}</div>
         </div>
-
-
         <div class="video-info-card">
-
-            <div class="video-info-label">
-                FPS
-            </div>
-
-            <div class="video-info-value">
-                ${Number(
-            result.fps || 0
-    ).toFixed(2)}
-            </div>
-
+            <div class="video-info-label">FPS</div>
+            <div class="video-info-value">${Number(result.fps || 0).toFixed(2)}</div>
         </div>
-
-
         <div class="video-info-card">
-
-            <div class="video-info-label">
-                Frames
-            </div>
-
-            <div class="video-info-value">
-                ${result.frame_count || 0}
-            </div>
-
+            <div class="video-info-label">Frames</div>
+            <div class="video-info-value">${result.frame_count || 0}</div>
         </div>
-
     `;
-
 
     const descriptionCard =
             document.getElementById(
                     "videoDescriptionCard"
             );
 
-
     const description =
             document.getElementById(
                     "videoDescription"
             );
-
 
     if (description && descriptionCard) {
       const rawDesc = result.video_description || "No events or description generated for this video.";
@@ -3393,9 +4193,9 @@
           return `<div class="scenario-section">${lines.map(line => {
             const trimmed = line.trim();
             const escaped = escapeHtml(trimmed);
-            if (trimmed.startsWith("🎬") || trimmed.startsWith("⏱️") || trimmed.startsWith("📊") || trimmed.startsWith("📹")) {
+            if (trimmed.startsWith("🎬") || trimmed.startsWith("⏱️") || trimmed.startsWith("📊") || trimmed.startsWith("📹") || trimmed.startsWith("🛡️") || trimmed.startsWith("🔐") || trimmed.startsWith("📋") || trimmed.startsWith("🔎")) {
               return `<div class="scenario-heading">${escaped}</div>`;
-            } else if (trimmed.startsWith("•")) {
+            } else if (trimmed.startsWith("•") || trimmed.startsWith("⚠️") || trimmed.startsWith("🚨") || trimmed.startsWith("👤") || trimmed.startsWith("📦")) {
               return `<div class="scenario-bullet">${escaped}</div>`;
             } else {
               return `<p class="scenario-text">${escaped}</p>`;
@@ -3409,99 +4209,79 @@
               "block";
     }
 
-
     const objects =
             document.getElementById(
                     "detectedObjects"
             );
-
 
     if (
             Array.isArray(
                     result.detected_objects
             )
     ) {
-
       objects.innerHTML =
               result.detected_objects
                       .map(
                               object =>
-                                      `<span class="badge">
-                            ${escapeHtml(object)}
-                        </span>`
+                                      `<span class="badge">${escapeHtml(object)}</span>`
                       )
                       .join("");
-
     }
-
 
     const table =
             document.getElementById(
                     "videoEventsTable"
             );
 
-
     table.innerHTML = "";
-
 
     if (
             Array.isArray(result.events)
     ) {
-
       result.events.forEach(
               event => {
+                const row = document.createElement("tr");
+                const dur = Number(event.duration_seconds || 0);
+                const objType = String(event.object_type || '').toLowerCase();
+                let activityText = 'Normal transit';
+                let activityColor = '#94a3b8';
 
-                const row =
-                        document.createElement(
-                                "tr"
-                        );
-
+                if (objType === 'person') {
+                  if (dur < 3.0) {
+                    activityText = '🏃 Fast Transit / Sprint';
+                    activityColor = '#f59e0b';
+                  } else if (dur < 12.0) {
+                    activityText = '🚶 Walking / Active Movement';
+                    activityColor = '#38bdf8';
+                  } else {
+                    activityText = '🧍 Stationary / Sustained Presence';
+                    activityColor = '#4ade80';
+                  }
+                } else if (['knife', 'baseball bat'].includes(objType)) {
+                  activityText = '🚨 WEAPON BRANDISHED';
+                  activityColor = '#ef4444';
+                } else if (['car', 'motorcycle', 'bicycle'].includes(objType)) {
+                  activityText = dur > 5 ? '🅿️ Vehicle Stopped' : '🚗 Vehicle in Transit';
+                  activityColor = '#a78bfa';
+                } else if (['backpack', 'handbag', 'suitcase'].includes(objType)) {
+                  activityText = dur > 15 ? '⚠️ Unattended Item' : '🎒 Carried Item';
+                  activityColor = dur > 15 ? '#f87171' : '#cbd5e1';
+                }
 
                 row.innerHTML = `
-
-                    <td>
-                        ${escapeHtml(
-                        event.object_type
-                )}
-                    </td>
-
-                    <td>
-                        #${escapeHtml(
-                        String(
-                                event.object_id
-                        )
-                )}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(
-                        event.start
-                )}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(
-                        event.end
-                )}
-                    </td>
-
-                    <td>
-                        ${Number(
-                        event.duration_seconds || 0
-                ).toFixed(2)}
-                        sec
-                    </td>
-
+                    <td><strong>${escapeHtml(event.object_type)}</strong></td>
+                    <td>#${escapeHtml(String(event.object_id))}</td>
+                    <td><span style="font-weight:700;color:${activityColor};">${escapeHtml(activityText)}</span></td>
+                    <td>${escapeHtml(event.start)}</td>
+                    <td>${escapeHtml(event.end)}</td>
+                    <td>${dur.toFixed(2)} sec</td>
                 `;
-
 
                 table.appendChild(
                         row
                 );
-
               }
       );
-
     }
 
   }
@@ -3786,7 +4566,43 @@
   /* Load all recordings on page start */
   loadAllRecordings();
 
+  /* Close video modal on ESC key */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeVideoModal();
+  });
+
+  /* Close video modal on backdrop click */
+  const videoModalOverlay = document.getElementById("videoModal");
+  if (videoModalOverlay) {
+    videoModalOverlay.addEventListener("click", function (e) {
+      if (e.target === videoModalOverlay) closeVideoModal();
+    });
+  }
+
 </script>
+
+<!-- =====================================================
+     SURVEILLANCE VIDEO MODAL OVERLAY
+     Displays footage when user clicks any event
+     ===================================================== -->
+<div class="video-modal-overlay" id="videoModal">
+  <div class="video-modal-header">
+    <div class="video-modal-title" id="videoModalTitle">
+      🎥 Surveillance Footage
+    </div>
+    <button class="video-modal-close" onclick="closeVideoModal()" title="Close viewer (Esc)">✕</button>
+  </div>
+  <div class="video-modal-video-wrap">
+    <video id="videoModalPlayer" controls preload="metadata"></video>
+  </div>
+  <div class="video-modal-context" id="videoModalContext">
+    <div class="ctx-item">📹 <strong>Camera:</strong> <span id="videoModalCamera">—</span></div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item">🕐 <strong>Time:</strong> <span id="videoModalTime">—</span></div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item">⚡ <strong>Activity:</strong> <span id="videoModalActivity">—</span></div>
+  </div>
+</div>
 
 </body>
 </html>

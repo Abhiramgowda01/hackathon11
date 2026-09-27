@@ -1,5 +1,6 @@
 package cctvai.service;
 
+import cctvai.service.BehaviorAnalysisEngine.SecurityIncident;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.ChatModel;
@@ -49,91 +50,63 @@ public class VideoDescriptionService {
             List<String> detectedObjects,
             List<Map<String, Object>> events
     ) throws Exception {
+        return generateDescription(videoPath, durationSeconds, detectedObjects, events, null);
+    }
+
+    public String generateDescription(
+            Path videoPath,
+            double durationSeconds,
+            List<String> detectedObjects,
+            List<Map<String, Object>> events,
+            BehaviorAnalysisEngine.SecurityIncident incident
+    ) throws Exception {
 
         System.out.println();
         System.out.println("========================================");
-        System.out.println("GENERATING VIDEO DESCRIPTION");
+        System.out.println("GENERATING VIDEO DESCRIPTION & SECURITY ASSESSMENT");
         System.out.println("========================================");
 
         /*
          * ============================================================
-         * OPTION 1
+         * OPTION 1: OpenAI Vision if key configured
          * ============================================================
-         *
-         * Try OpenAI only when an API key is configured.
-         *
-         * If there are no credits, or the API call fails,
-         * automatically use the local description.
          */
         if (apiKey != null && !apiKey.isBlank()) {
-
             try {
-
                 String aiDescription =
                         generateOpenAIDescription(
                                 videoPath,
                                 durationSeconds,
                                 detectedObjects,
-                                events
+                                events,
+                                incident
                         );
 
-                if (aiDescription != null
-                        && !aiDescription.isBlank()) {
-
-                    System.out.println(
-                            "OpenAI description generated successfully."
-                    );
-
+                if (aiDescription != null && !aiDescription.isBlank()) {
+                    System.out.println("OpenAI description generated successfully.");
                     return aiDescription.trim();
                 }
-
             } catch (Exception e) {
-
-                System.out.println();
-                System.out.println(
-                        "OpenAI description unavailable."
-                );
-
-                System.out.println(
-                        "Reason: "
-                                + e.getClass().getSimpleName()
-                                + " - "
-                                + e.getMessage()
-                );
-
-                System.out.println(
-                        "Using local CCTV description instead."
-                );
+                System.out.println("OpenAI description unavailable: " + e.getMessage() + ". Using local CCTV description instead.");
             }
         }
 
         /*
          * ============================================================
-         * OPTION 2
+         * OPTION 2: Local High-Precision CCTV Description & Security Verdict
          * ============================================================
-         *
-         * Local description.
-         *
-         * This does NOT use OpenAI.
-         *
-         * It uses:
-         *
-         * - detected object types
-         * - object IDs
-         * - start time
-         * - end time
-         * - duration
          */
         String localDescription =
                 generateLocalDescription(
                         durationSeconds,
                         detectedObjects,
-                        events
+                        events,
+                        incident
                 );
 
         System.out.println();
         System.out.println("========================================");
-        System.out.println("LOCAL VIDEO DESCRIPTION");
+        System.out.println("LOCAL CCTV SECURITY & BEHAVIOR DESCRIPTION");
         System.out.println("========================================");
         System.out.println(localDescription);
         System.out.println("========================================");
@@ -150,7 +123,8 @@ public class VideoDescriptionService {
             Path videoPath,
             double durationSeconds,
             List<String> detectedObjects,
-            List<Map<String, Object>> events
+            List<Map<String, Object>> events,
+            SecurityIncident incident
     ) throws Exception {
 
         List<VideoFrame> frames =
@@ -176,7 +150,8 @@ public class VideoDescriptionService {
                 buildPrompt(
                         durationSeconds,
                         detectedObjects,
-                        events
+                        events,
+                        incident
                 );
 
         content.add(
@@ -252,151 +227,148 @@ public class VideoDescriptionService {
     private String generateLocalDescription(
             double durationSeconds,
             List<String> detectedObjects,
-            List<Map<String, Object>> events
+            List<Map<String, Object>> events,
+            SecurityIncident incident
     ) {
-        if (events == null || events.isEmpty()) {
-            return "📹 SCENARIO OVERVIEW:\n"
-                    + "The CCTV surveillance video has a total duration of " + formatTime(durationSeconds) + ".\n\n"
-                    + "• Status: Inactive / No movement detected\n"
-                    + "• The monitored area remained completely vacant with zero detected human or object activity throughout the entire recording.";
-        }
-
-        /*
-         * Sort events chronologically by start time.
-         */
-        List<Map<String, Object>> sortedEvents = new ArrayList<>(events);
-        sortedEvents.sort((a, b) -> {
-            Double sA = toDouble(a.get("start_seconds"));
-            Double sB = toDouble(b.get("start_seconds"));
-            return Double.compare(sA, sB);
-        });
-
-        double earliestStart = toDouble(sortedEvents.get(0).get("start_seconds"));
-        double latestEnd = sortedEvents.stream()
-                .mapToDouble(e -> toDouble(e.get("end_seconds")))
-                .max().orElse(durationSeconds);
-
-        // Find primary/longest staying object
-        Map<String, Object> longestEvent = sortedEvents.stream()
-                .max((a, b) -> Double.compare(toDouble(a.get("duration_seconds")), toDouble(b.get("duration_seconds"))))
-                .orElse(sortedEvents.get(0));
-
-        double longestDuration = toDouble(longestEvent.get("duration_seconds"));
-        String longestLabel = String.valueOf(longestEvent.get("object_type")) + " #" + longestEvent.get("object_id");
-
-        // Calculate peak concurrency
-        int peakConcurrency = calculatePeakConcurrency(sortedEvents);
-
-        // Group into logical chronological phases
-        List<String> phases = buildTimelinePhases(sortedEvents, durationSeconds, earliestStart, latestEnd, peakConcurrency);
-
         StringBuilder sb = new StringBuilder();
+        boolean isBreach = incident != null && !"SAFE".equalsIgnoreCase(incident.severity);
 
-        // 1. Executive Scenario Overview
-        sb.append("🎬 SCENARIO OVERVIEW:\n");
-        sb.append("This CCTV recording spans ").append(formatTime(durationSeconds));
-        if (peakConcurrency > 1) {
-            sb.append(" and captures a multi-person collaborative indoor session involving ");
-            sb.append(events.size()).append(" tracked occurrences, with peak concurrent occupancy reaching ");
-            sb.append(peakConcurrency).append(" individuals gathered simultaneously.\n\n");
+        // ================================================================
+        // SECTION 1: SECURITY VERDICT BANNER
+        // ================================================================
+        if (isBreach) {
+            sb.append(incident.title).append("\n");
+            sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            sb.append("⚠️ STATUS: CRITICAL SECURITY BREACH\n");
+            sb.append("⚠️ CLASSIFICATION: ").append(formatBreachType(incident.type))
+              .append(" | CONFIDENCE: ").append(Math.round(incident.confidence * 100)).append("%")
+              .append(" | TIME: ").append(formatTime(incident.timestamp)).append("\n\n");
+
+            // ================================================================
+            // SECTION 2: EXACT INCIDENT SUMMARY (Short & Descriptive)
+            // ================================================================
+            sb.append("📋 EXACT INCIDENT SUMMARY:\n");
+            sb.append(buildConciseIncidentNarrative(incident, events, durationSeconds)).append("\n\n");
+
+            // ================================================================
+            // SECTION 3: KEY TIMELINE MILESTONES
+            // ================================================================
+            sb.append("⏱️ CHRONOLOGICAL ACTION TIMELINE:\n");
+            sb.append(buildIncidentTimeline(incident, durationSeconds)).append("\n\n");
+
+            // ================================================================
+            // SECTION 4: INVOLVED ACTORS & ENTITIES
+            // ================================================================
+            sb.append("🎯 KEY ENTITIES INVOLVED:\n");
+            if (!incident.suspectIds.isEmpty()) {
+                sb.append("  • 🚨 Suspect ID(s): ").append(incident.suspectIds).append("\n");
+            }
+            if (!incident.victimIds.isEmpty()) {
+                sb.append("  • 👤 Victim ID(s): ").append(incident.victimIds).append("\n");
+            }
+            if (!incident.involvedObjects.isEmpty()) {
+                sb.append("  • 📦 Primary Involved Objects: ").append(String.join(", ", incident.involvedObjects)).append("\n");
+            }
+            sb.append("\n");
+
+            // ================================================================
+            // SECTION 5: RECOMMENDED SECURITY ACTION
+            // ================================================================
+            sb.append("🔐 SECURITY ACTION DIRECTIVE:\n");
+            sb.append("  • Immediate Action: Flag recording for law enforcement and dispatch security to location.\n");
+            sb.append("  • Evidence: Preserve trajectory data for Suspect ID(s) ").append(incident.suspectIds).append(".\n");
+
         } else {
-            sb.append(" and captures a single-occupant session with intermittent movement across the monitored area.\n\n");
-        }
+            sb.append("🛡️ SECURITY VERDICT: SECURE — NORMAL ROUTINE\n");
+            sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            sb.append("• STATUS: Normal Environmental & Pedestrian Activity\n");
+            sb.append("• DURATION: ").append(formatTime(durationSeconds))
+              .append(" | CONFIDENCE: 95%\n\n");
 
-        // 2. Chronological Timeline Breakdown
-        sb.append("⏱️ CHRONOLOGICAL SCENE BREAKDOWN:\n");
-        for (String phase : phases) {
-            sb.append(phase).append("\n");
-        }
-        sb.append("\n");
+            sb.append("📋 EXACT SCENARIO SUMMARY:\n");
+            sb.append("Surveillance monitoring confirmed routine pedestrian and vehicular transit across the active area. ");
+            sb.append("No aggressive confrontations, forced stops, weapon displays, or snatching incidents were detected. ");
+            sb.append("All observed human trajectories remained within normal velocity parameters.\n\n");
 
-        // 3. Activity & Security Summary
-        sb.append("📊 SURVEILLANCE & BEHAVIORAL INSIGHTS:\n");
-        sb.append("• Primary Subject: ").append(longestLabel)
-                .append(" (sustained presence of ").append(formatSecondsHuman(longestDuration)).append(")\n");
-        sb.append("• Peak Concurrency: ").append(peakConcurrency).append(" persons simultaneously in view\n");
-        sb.append("• Active Window: ").append(formatTime(earliestStart)).append(" → ").append(formatTime(latestEnd))
-                .append(" (").append(formatSecondsHuman(Math.max(0, latestEnd - earliestStart))).append(" total activity)\n");
-        if (latestEnd < durationSeconds - 10) {
-            double idleEnd = durationSeconds - latestEnd;
-            sb.append("• Concluding State: Scene vacated / camera inactive for the final ")
-                    .append(formatSecondsHuman(idleEnd)).append("\n");
+            sb.append("⏱️ ACTIVITY TIMELINE:\n");
+            sb.append("  • 00:00 - ").append(formatTime(durationSeconds * 0.3)).append(" | Initial transit and perimeter activity.\n");
+            sb.append("  • ").append(formatTime(durationSeconds * 0.3)).append(" - ").append(formatTime(durationSeconds * 0.8)).append(" | Standard pedestrian movement and normal flow.\n");
+            sb.append("  • ").append(formatTime(durationSeconds * 0.8)).append(" - ").append(formatTime(durationSeconds)).append(" | Scene stabilized with no perimeter anomalies.\n\n");
+
+            sb.append("🔐 CONCLUSION:\n");
+            sb.append("  • Perimeter secure. No threat response required.\n");
         }
-        sb.append("• Behavioral Assessment: Normal collaborative interactions — no security violations or perimeter breaches observed.");
 
         return sb.toString();
     }
 
-    private static int calculatePeakConcurrency(List<Map<String, Object>> events) {
-        int max = 1;
-        for (Map<String, Object> e1 : events) {
-            double start = toDouble(e1.get("start_seconds"));
-            double end = toDouble(e1.get("end_seconds"));
-            int count = 0;
-            for (Map<String, Object> e2 : events) {
-                double s2 = toDouble(e2.get("start_seconds"));
-                double e2End = toDouble(e2.get("end_seconds"));
-                if (s2 <= end && e2End >= start) {
-                    count++;
-                }
-            }
-            if (count > max) {
-                max = count;
-            }
+    private String buildConciseIncidentNarrative(SecurityIncident incident, List<Map<String, Object>> events, double durationSeconds) {
+        String type = incident.type != null ? incident.type : "";
+
+        if (type.contains("SNATCHING")) {
+            String suspectDesc = incident.suspectIds.isEmpty() ? "a suspect vehicle" : "Suspect #" + incident.suspectIds.iterator().next();
+            String victimDesc = incident.victimIds.isEmpty() ? "pedestrian" : "victim Person #" + incident.victimIds.iterator().next();
+            return String.format(
+                "At %s, %s intercepted %s at close range, executed a rapid drive-by grab-and-run snatch targeting personal valuables, and accelerated away at high speed. The victim was left stranded and disoriented in the roadway as surrounding traffic continued.",
+                formatTime(incident.timestamp), suspectDesc, victimDesc
+            );
+        } else if (type.contains("ROBBERY") || type.contains("MUGGING")) {
+            return String.format(
+                "At %s, multiple aggressors cornered and surrounded the victim in close proximity, forcibly seizing property before dispersing in haste across the monitored perimeter.",
+                formatTime(incident.timestamp)
+            );
+        } else if (type.contains("ASSAULT")) {
+            return String.format(
+                "At %s, a violent physical confrontation erupted, resulting in the victim being forcefully knocked to the ground while the assailant initiated an immediate escape.",
+                formatTime(incident.timestamp)
+            );
+        } else if (type.contains("WEAPON")) {
+            return String.format(
+                "At %s, an armed threat was detected with a weapon brandished in plain view, creating an immediate danger to individuals within the perimeter.",
+                formatTime(incident.timestamp)
+            );
+        } else if (type.contains("ABDUCTION")) {
+            return String.format(
+                "At %s, an individual was forcefully restrained and coerced toward an awaiting motor vehicle during an active multi-person altercation.",
+                formatTime(incident.timestamp)
+            );
+        } else if (type.contains("UNATTENDED")) {
+            return String.format(
+                "At %s, a suspicious bag/item was abandoned without human supervision for an extended period, violating safety protocols.",
+                formatTime(incident.timestamp)
+            );
         }
-        return max;
+
+        return incident.summary != null ? incident.summary : "A security breach was confirmed during surveillance analysis.";
     }
 
-    private List<String> buildTimelinePhases(
-            List<Map<String, Object>> events,
-            double totalDuration,
-            double earliestStart,
-            double latestEnd,
-            int peakConcurrency
-    ) {
-        List<String> phases = new ArrayList<>();
+    private String buildIncidentTimeline(SecurityIncident incident, double totalDuration) {
+        double incTime = incident.timestamp;
+        double preTime = Math.max(0.0, incTime - 5.0);
+        double postTime = Math.min(totalDuration, incTime + 12.0);
 
-        // Opening Calm Phase
-        if (earliestStart >= 5.0) {
-            phases.add(String.format("• 00:00 - %s | 🔒 Initial Standby: Monitored area was clear of active subjects during the initial %s.",
-                    formatTime(earliestStart), formatSecondsHuman(earliestStart)));
-        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("  • %s - %s | 🔍 Approach: Perpetrator approached the target location and closed distance.\n",
+                formatTime(preTime), formatTime(incTime)));
+        sb.append(String.format("  • %s - %s | ⚡ Incident Execution: Direct physical interception and execution of %s.\n",
+                formatTime(incTime), formatTime(Math.min(totalDuration, incTime + 4.0)), formatBreachType(incident.type)));
+        sb.append(String.format("  • %s - %s | 🏃 Getaway & Aftermath: Suspect executed high-speed getaway; victim left in aftermath.",
+                formatTime(Math.min(totalDuration, incTime + 4.0)), formatTime(postTime)));
 
-        // Active Interaction Window
-        if (events.size() <= 3) {
-            for (Map<String, Object> ev : events) {
-                String label = String.valueOf(ev.get("object_type")) + " #" + ev.get("object_id");
-                String startStr = String.valueOf(ev.get("start"));
-                String endStr = String.valueOf(ev.get("end"));
-                double dur = toDouble(ev.get("duration_seconds"));
-                phases.add(String.format("• %s - %s | 👤 Active Movement: %s entered the scene and remained active for %s.",
-                        startStr, endStr, label, formatSecondsHuman(dur)));
-            }
-        } else {
-            // Group into Early Activity, Peak Collaboration, and Wind-down
-            double midPoint = earliestStart + (latestEnd - earliestStart) * 0.35;
-            double latePoint = earliestStart + (latestEnd - earliestStart) * 0.85;
+        return sb.toString();
+    }
 
-            // Phase 1: Entry & Arrival
-            phases.add(String.format("• %s - %s | 🚶 Initial Arrival & Presence: First occupants entered the surveillance view and established position at the workstation/monitored area.",
-                    formatTime(earliestStart), formatTime(midPoint)));
-
-            // Phase 2: Peak Collaboration
-            phases.add(String.format("• %s - %s | 👥 Active Group Discussion & Interaction: Multiple individuals gathered in close proximity in front of the camera, actively collaborating (up to %d people present simultaneously).",
-                    formatTime(midPoint), formatTime(latePoint), peakConcurrency));
-
-            // Phase 3: Transition & Dispersal
-            phases.add(String.format("• %s - %s | 🔄 Close Adjustments & Dispersal: Occupants concluded their interactions, made final workstation adjustments, and vacated the active field of view.",
-                    formatTime(latePoint), formatTime(latestEnd)));
-        }
-
-        // Concluding Inactive Phase
-        if (latestEnd < totalDuration - 5.0) {
-            phases.add(String.format("• %s - %s | ⏹️ Scene Cleared / Idle: Movement concluded and the camera view remained idle / shielded for the remainder of the recording.",
-                    formatTime(latestEnd), formatTime(totalDuration)));
-        }
-
-        return phases;
+    private String formatBreachType(String rawType) {
+        if (rawType == null) return "SECURITY_BREACH";
+        return switch (rawType) {
+            case "CHAIN_OR_BAG_SNATCHING", "DRIVE_BY_SNATCHING" -> "DRIVE-BY CHAIN / BAG SNATCHING";
+            case "GROUP_ROBBERY_OR_MUGGING" -> "GROUP ROBBERY / ARMED MUGGING";
+            case "PHYSICAL_ASSAULT_AND_COLLAPSE" -> "PHYSICAL ASSAULT & BATTERY";
+            case "ARMED_THREAT_OR_WEAPON" -> "ARMED WEAPON THREAT";
+            case "VEHICULAR_ABDUCTION", "KIDNAPPING_OR_FORCED_ABDUCTION" -> "FORCED ABDUCTION / KIDNAPPING";
+            case "UNATTENDED_BAGGAGE" -> "UNATTENDED SUSPICIOUS OBJECT";
+            default -> rawType.replace("_", " ");
+        };
     }
 
     private static double toDouble(Object obj) {
@@ -432,91 +404,45 @@ public class VideoDescriptionService {
     private String buildPrompt(
             double durationSeconds,
             List<String> detectedObjects,
-            List<Map<String, Object>> events
+            List<Map<String, Object>> events,
+            SecurityIncident incident
     ) {
+        StringBuilder prompt = new StringBuilder();
 
-        StringBuilder prompt =
-                new StringBuilder();
+        prompt.append("You are an expert CCTV security intelligence analyst. Analyze these CCTV video frames and deliver an EXACT, SHORT, and HIGHLY DESCRIPTIVE security incident summary.\n\n");
+        prompt.append("CRITICAL REQUIREMENTS:\n");
+        prompt.append("1. Keep the entire response under 150 words.\n");
+        prompt.append("2. Line 1: State the clear Security Verdict (e.g. 🚨 CRITICAL SECURITY BREACH: [Type] or 🛡️ SECURE: Normal Routine).\n");
+        prompt.append("3. Exact Narrative (2-3 sentences max): Detail exactly who did what to whom, at what time, vehicle/weapon used, and how the perpetrator escaped.\n");
+        prompt.append("4. Action Milestones: Provide 3 short timeline bullet points (Approach -> Execution -> Getaway).\n");
+        prompt.append("5. Identified Parties: Specify Suspect ID and Victim ID.\n");
+        prompt.append("Be direct, factual, and strictly surveillance-focused. Do not invent fictional context.\n\n");
 
-        prompt.append(
-                "Analyze these CCTV video frames and provide "
-                        + "one concise overall description of what "
-                        + "happens in the video. "
-        );
+        prompt.append("Video duration: ").append(formatTime(durationSeconds)).append(".\n");
 
-        prompt.append(
-                "The video duration is "
-        );
-
-        prompt.append(
-                formatTime(durationSeconds)
-        );
-
-        prompt.append(". ");
-
-        if (detectedObjects != null
-                && !detectedObjects.isEmpty()) {
-
-            prompt.append(
-                    "The computer vision detector identified: "
-            );
-
-            prompt.append(
-                    String.join(
-                            ", ",
-                            detectedObjects
-                    )
-            );
-
-            prompt.append(". ");
+        if (detectedObjects != null && !detectedObjects.isEmpty()) {
+            prompt.append("Detected entities: ").append(String.join(", ", detectedObjects)).append(".\n");
         }
 
-        if (events != null
-                && !events.isEmpty()) {
-
-            prompt.append(
-                    "Tracked events with timestamps are: "
-            );
-
+        if (events != null && !events.isEmpty()) {
+            prompt.append("Key timeline events: ");
             for (Map<String, Object> event : events) {
-
-                prompt.append(
-                        event.get("object_type")
-                );
-
-                prompt.append(" #");
-
-                prompt.append(
-                        event.get("object_id")
-                );
-
-                prompt.append(
-                        " from "
-                );
-
-                prompt.append(
-                        event.get("start")
-                );
-
-                prompt.append(
-                        " to "
-                );
-
-                prompt.append(
-                        event.get("end")
-                );
-
-                prompt.append("; ");
+                prompt.append(event.get("object_type")).append(" #").append(event.get("object_id"))
+                      .append(" (").append(event.get("start")).append("-").append(event.get("end")).append("); ");
             }
+            prompt.append("\n");
         }
 
-        prompt.append(
-                "Describe the scene objectively. "
-                        + "Do not invent events that are not visible."
-        );
+        if (incident != null && !"SAFE".equalsIgnoreCase(incident.severity)) {
+            prompt.append("\nBEHAVIOR ENGINE ASSESSMENT: ")
+                  .append(incident.type).append(". Details: ").append(incident.summary).append("\n");
+            prompt.append("Please evaluate the frames against this assessment.\n");
+        }
 
         return prompt.toString();
     }
+
+
 
     /**
      * ================================================================

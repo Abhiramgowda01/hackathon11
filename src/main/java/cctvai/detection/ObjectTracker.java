@@ -86,32 +86,58 @@ public class ObjectTracker {
 
 
             /*
-             * EXISTING OBJECT FOUND
+             * EXISTING OBJECT FOUND via IoU
              */
-            if (bestMatch != null
-                    && bestIoU >= IOU_THRESHOLD) {
-
+            if (bestMatch != null && bestIoU >= IOU_THRESHOLD) {
                 bestMatch.update(
                         detection.getBoundingBox(),
                         detection.getConfidence()
                 );
-
             } else {
-
                 /*
-                 * NEW OBJECT FOUND
+                 * Fallback centroid distance matching for fast runners / fast moving vehicles
                  */
-                TrackedObject newObject =
-                        new TrackedObject(
-                                nextId++,
-                                detection.getLabel(),
-                                detection.getConfidence(),
-                                detection.getBoundingBox()
-                        );
+                TrackedObject distanceMatch = null;
+                double minDistance = 140.0; // max pixel jump between frames for same identity
 
-                newObject.setMatched(true);
+                org.bytedeco.opencv.opencv_core.Rect dBox = detection.getBoundingBox();
+                double dCenterX = dBox.x() + (dBox.width() / 2.0);
+                double dCenterY = dBox.y() + (dBox.height() / 2.0);
 
-                trackedObjects.add(newObject);
+                for (TrackedObject existing : trackedObjects) {
+                    if (existing.isMatched()) continue;
+                    if (!existing.getLabel().equalsIgnoreCase(detection.getLabel())) continue;
+
+                    org.bytedeco.opencv.opencv_core.Rect eBox = existing.getBoundingBox();
+                    double eCenterX = eBox.x() + (eBox.width() / 2.0);
+                    double eCenterY = eBox.y() + (eBox.height() / 2.0);
+                    double dist = Math.sqrt(Math.pow(dCenterX - eCenterX, 2) + Math.pow(dCenterY - eCenterY, 2));
+
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        distanceMatch = existing;
+                    }
+                }
+
+                if (distanceMatch != null) {
+                    distanceMatch.update(
+                            detection.getBoundingBox(),
+                            detection.getConfidence()
+                    );
+                } else {
+                    /*
+                     * NEW OBJECT FOUND
+                     */
+                    TrackedObject newObject =
+                            new TrackedObject(
+                                    nextId++,
+                                    detection.getLabel(),
+                                    detection.getConfidence(),
+                                    detection.getBoundingBox()
+                            );
+                    newObject.setMatched(true);
+                    trackedObjects.add(newObject);
+                }
             }
         }
 

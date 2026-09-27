@@ -382,15 +382,36 @@ public class BrowserCameraService {
                 activities
         ) {
 
+            int objId = activity.getObjectId();
+            String finalAct = activity.getFinalActivity();
+
             finalActivityMap.put(
-                    activity.getObjectId(),
-                    activity.getFinalActivity()
+                    objId,
+                    finalAct
             );
 
             objectTypeMap.put(
-                    activity.getObjectId(),
+                    objId,
                     activity.getObjectType()
             );
+
+            /*
+             * Real-time anomaly update: If an abnormal behavior is observed
+             * (FIGHTING, CROWD GATHERING, RUNNING, FALLEN, LOITERING),
+             * immediately update the active database event so alerts appear immediately!
+             */
+            Map<Integer, Event> sessionEvents = activeEvents.get(sessionId);
+            if (sessionEvents != null && sessionEvents.containsKey(objId) && activity.isAnomaly()) {
+                Event event = sessionEvents.get(objId);
+                if (event != null && (!event.isAnomaly() || !event.getDescription().contains(finalAct))) {
+                    event.setAnomaly(true);
+                    event.setDescription(
+                            event.getObjectType() + " #" + objId + " -> " + finalAct
+                    );
+                    event.setBehaviorType(classifyBehaviorType(finalAct));
+                    eventRepository.save(event);
+                }
+            }
         }
     }
 
@@ -534,20 +555,20 @@ public class BrowserCameraService {
                     objectType
                             + " #"
                             + objectId
-                            + " → "
+                            + " -> "
                             + finalActivity
             );
 
 
             /*
-             * LOITERING is currently considered
-             * an anomaly by the existing activity system.
+             * Mark abnormal activities as anomaly:
+             * FIGHTING, CROWD GATHERING, LOITERING, RUNNING, FALLEN, or other suspicious/anomalous behavior.
              */
-            event.setAnomaly(
-                    "LOITERING".equalsIgnoreCase(
-                            finalActivity
-                    )
-            );
+            boolean isAnomaly = ObjectActivityTracker.isAbnormalBehavior(finalActivity);
+
+            event.setAnomaly(isAnomaly);
+
+            event.setBehaviorType(classifyBehaviorType(finalActivity));
 
 
             event.setEndTime(
@@ -643,16 +664,14 @@ public class BrowserCameraService {
                         objectType
                                 + " #"
                                 + objectId
-                                + " → "
+                                + " -> "
                                 + finalActivity
                 );
 
 
-                event.setAnomaly(
-                        "LOITERING".equalsIgnoreCase(
-                                finalActivity
-                        )
-                );
+                boolean isAnomaly = ObjectActivityTracker.isAbnormalBehavior(finalActivity);
+
+                event.setAnomaly(isAnomaly);
 
 
                 event.setEndTime(
@@ -693,5 +712,24 @@ public class BrowserCameraService {
         closeSession(
                 sessionId
         );
+    }
+
+
+    /*
+     * ============================================================
+     * BEHAVIOR TYPE CLASSIFIER
+     * ============================================================
+     */
+
+    private static String classifyBehaviorType(String activity) {
+        if (activity == null || activity.isBlank()) return "NORMAL";
+        String a = activity.toUpperCase();
+        if (a.contains("FIGHT") || a.contains("BRAWL") || a.contains("ASSAULT") || a.contains("ALTERCATION")) return "FIGHTING";
+        if (a.contains("CROWD") || a.contains("GATHERING") || a.contains("CONGREGAT")) return "CROWD_GATHERING";
+        if (a.contains("RUNNING") || a.contains("SPRINT") || a.contains("FLEE")) return "RUNNING";
+        if (a.contains("FALLEN") || a.contains("COLLAPSE")) return "FALLEN";
+        if (a.contains("LOITERING")) return "LOITERING";
+        if (a.contains("FAST")) return "SPEEDING";
+        return "NORMAL";
     }
 }

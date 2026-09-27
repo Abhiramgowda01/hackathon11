@@ -3,6 +3,9 @@ package cctvai.service;
 import cctvai.detection.Detection;
 import cctvai.detection.ObjectDetector;
 import cctvai.detection.ObjectTracker;
+import cctvai.service.BehaviorAnalysisEngine.AnalysisSession;
+import cctvai.service.BehaviorAnalysisEngine.LiveEvent;
+import cctvai.service.BehaviorAnalysisEngine.SecurityIncident;
 
 import org.bytedeco.opencv.global.opencv_videoio;
 import org.bytedeco.opencv.opencv_core.Mat;
@@ -15,10 +18,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class VideoAnalysisService {
@@ -26,6 +31,10 @@ public class VideoAnalysisService {
     private final ObjectDetector objectDetector;
 
     private final VideoDescriptionService videoDescriptionService;
+
+    private final BehaviorAnalysisEngine behaviorAnalysisEngine;
+
+    private final cctvai.repository.EventRepository eventRepository;
 
     /*
      * Uploaded videos will be stored here.
@@ -51,13 +60,18 @@ public class VideoAnalysisService {
     private volatile String progressMessage = "Waiting for video.";
     private final List<String> progressDetectedObjects =
             new java.util.concurrent.CopyOnWriteArrayList<>();
+    private volatile AnalysisSession currentSession = null;
 
     public VideoAnalysisService(
             ObjectDetector objectDetector,
-            VideoDescriptionService videoDescriptionService
+            VideoDescriptionService videoDescriptionService,
+            BehaviorAnalysisEngine behaviorAnalysisEngine,
+            cctvai.repository.EventRepository eventRepository
     ) {
         this.objectDetector = objectDetector;
         this.videoDescriptionService = videoDescriptionService;
+        this.behaviorAnalysisEngine = behaviorAnalysisEngine;
+        this.eventRepository = eventRepository;
     }
 
     public Map<String, Object> getProgress() {
@@ -71,6 +85,25 @@ public class VideoAnalysisService {
         map.put("eventsCount", progressEventsCount);
         map.put("detectedObjects", new ArrayList<>(progressDetectedObjects));
         map.put("message", progressMessage);
+
+        AnalysisSession session = this.currentSession;
+        if (session != null) {
+            map.put("currentSceneDescription", session.currentSceneDescription);
+            SecurityIncident top = session.highestThreatIncident;
+            if (top != null) {
+                map.put("isSecurityBreach", !"SAFE".equalsIgnoreCase(top.severity));
+                map.put("currentThreatTitle", top.title);
+                map.put("currentThreatSeverity", top.severity);
+                map.put("currentThreatType", top.type);
+            } else {
+                map.put("isSecurityBreach", false);
+            }
+            List<Map<String, Object>> liveLogList = session.liveLog.stream()
+                    .map(LiveEvent::toMap)
+                    .collect(Collectors.toList());
+            map.put("liveEvents", liveLogList);
+        }
+
         return map;
     }
 
@@ -100,8 +133,15 @@ public class VideoAnalysisService {
         ObjectTracker videoObjectTracker =
                 new ObjectTracker();
 
+        /* Create a fresh behavior analysis session for this video upload */
+        AnalysisSession behaviorSession =
+                behaviorAnalysisEngine.createSession();
+        this.currentSession = behaviorSession;
+
         VideoCapture capture =
                 new VideoCapture();
+
+
 
         try {
             Files.createDirectories(
@@ -327,6 +367,15 @@ public class VideoAnalysisService {
                             );
 
                     /*
+                     * BEHAVIOR ANALYSIS — detect human behaviors and security threats
+                     */
+                    behaviorAnalysisEngine.processFrame(
+                            behaviorSession,
+                            videoTimeSeconds,
+                            trackedObjects
+                    );
+
+                    /*
                      * PROCESS CURRENTLY TRACKED OBJECTS
                      */
                     for (
@@ -437,6 +486,7 @@ public class VideoAnalysisService {
                     }
                 }
 
+
                 // Update real-time progress
                 progressFrame = frameNumber;
                 progressCurrentTimeSeconds = videoTimeSeconds;
@@ -486,44 +536,34 @@ public class VideoAnalysisService {
             }
 
             /*
-             * Release final frame.
-             */
-            frame.release();
-
-            /*
-             * GENERATE ONE OVERALL AI DESCRIPTION
+             * GENERATE ONE OVERALL AI DESCRIPTION WITH SECURITY ASSESSMENT
              */
             progressStatus = "generating_description";
             progressPercent = 95;
-            progressMessage = "Generating AI description and event breakdown...";
+            progressMessage = "Generating AI security description and behavioral event breakdown...";
 
             System.out.println();
-            System.out.println(
-                    "========================================"
-            );
-            System.out.println(
-                    "GENERATING OVERALL VIDEO DESCRIPTION"
-            );
-            System.out.println(
-                    "========================================"
-            );
+            System.out.println("========================================");
+            System.out.println("GENERATING SECURITY-AWARE VIDEO DESCRIPTION");
+            System.out.println("========================================");
+
+            // Grab the highest-threat security incident
+            SecurityIncident topIncident = behaviorSession.highestThreatIncident;
 
             String videoDescription;
 
             try {
-
                 videoDescription =
                         videoDescriptionService.generateDescription(
                                 videoPath,
                                 durationSeconds,
                                 detectedTypes,
-                                completedEvents
+                                completedEvents,
+                                topIncident
                         );
 
             } catch (Exception e) {
-
                 e.printStackTrace();
-
                 videoDescription =
                         "AI description failed: "
                                 + e.getClass().getSimpleName()
@@ -537,65 +577,89 @@ public class VideoAnalysisService {
             Map<String, Object> result =
                     new LinkedHashMap<>();
 
-            result.put(
-                    "status",
-                    "completed"
-            );
+            result.put("status", "completed");
+            result.put("filename", originalFilename);
+            result.put("duration_seconds", round(durationSeconds));
+            result.put("fps", round(fps));
+            result.put("frame_count", frameNumber);
+            result.put("detected_objects", detectedTypes);
+            result.put("events", completedEvents);
 
-            result.put(
-                    "filename",
-                    originalFilename
-            );
+            // ── Security Assessment ──────────────────────────────────────
+            boolean isSecurityBreach =
+                    topIncident != null && !"SAFE".equalsIgnoreCase(topIncident.severity);
 
-            result.put(
-                    "duration_seconds",
-                    round(durationSeconds)
-            );
+            result.put("is_security_breach", isSecurityBreach);
+            result.put("security_verdict",
+                    isSecurityBreach ? topIncident.severity + " — " + topIncident.title : "✅ SECURE");
 
-            result.put(
-                    "fps",
-                    round(fps)
-            );
+            if (topIncident != null) {
+                result.put("security_incident", topIncident.toMap());
+            }
 
-            result.put(
-                    "frame_count",
-                    frameNumber
-            );
+            // ── All detected incidents ────────────────────────────────────
+            if (!behaviorSession.detectedIncidents.isEmpty()) {
+                result.put("all_incidents",
+                        behaviorSession.detectedIncidents.stream()
+                                .map(SecurityIncident::toMap)
+                                .collect(Collectors.toList()));
 
-            result.put(
-                    "detected_objects",
-                    detectedTypes
-            );
+                // Persist suspicious incidents to EventRepository for "Events worth a look"
+                if (eventRepository != null) {
+                    Instant now = Instant.now();
+                    for (SecurityIncident inc : behaviorSession.detectedIncidents) {
+                        try {
+                            cctvai.model.Event evt = new cctvai.model.Event();
+                            evt.setCameraId(originalFilename);
+                            int objId = inc.suspectIds.isEmpty() ? 1 : inc.suspectIds.iterator().next();
+                            evt.setObjectId(objId);
+                            evt.setObjectType("person");
+                            Instant start = now.minusSeconds((long) Math.max(0, durationSeconds - inc.timestamp));
+                            evt.setStartTime(start);
+                            evt.setEndTime(start.plusSeconds(8));
+                            evt.setTimestamp(start);
+                            evt.setAnomaly(true);
 
-            result.put(
-                    "events",
-                    completedEvents
-            );
+                            String bType = "SUSPICIOUS";
+                            if (inc.type != null) {
+                                String ut = inc.type.toUpperCase();
+                                if (ut.contains("FIGHT") || ut.contains("ASSAULT")) bType = "FIGHTING";
+                                else if (ut.contains("CROWD")) bType = "CROWD_GATHERING";
+                                else if (ut.contains("RUN") || ut.contains("FLEE") || ut.contains("SPRINT") || ut.contains("SNATCH")) bType = "RUNNING";
+                                else if (ut.contains("FALLEN") || ut.contains("COLLAPSE")) bType = "FALLEN";
+                            }
+                            evt.setBehaviorType(bType);
+                            evt.setDescription(inc.title + ": " + inc.summary);
+                            eventRepository.save(evt);
+                        } catch (Exception ex) {
+                            System.err.println("Could not save video incident to eventRepository: " + ex.getMessage());
+                        }
+                    }
+                }
+            }
 
-            /*
-             * Overall AI description.
-             */
-            result.put(
-                    "video_description",
-                    videoDescription
-            );
+            // ── Live Event Log (frame-by-frame narration) ─────────────────
+            result.put("behavior_live_log",
+                    behaviorSession.liveLog.stream()
+                            .map(LiveEvent::toMap)
+                            .collect(Collectors.toList()));
+
+            // ── Overall AI description ─────────────────────────────────────
+            result.put("video_description", videoDescription);
 
             progressStatus = "completed";
             progressPercent = 100;
-            progressMessage = "Video analysis completed successfully!";
+            progressMessage = isSecurityBreach
+                    ? "⚠️ SECURITY BREACH DETECTED! Analysis complete."
+                    : "✅ Video analysis completed — No security threats.";
 
             System.out.println();
-            System.out.println(
-                    "========================================"
-            );
-            System.out.println(
-                    "VIDEO ANALYSIS COMPLETED"
-            );
-            System.out.println(
-                    "========================================"
-            );
+            System.out.println("========================================");
+            System.out.println("VIDEO ANALYSIS COMPLETED — " + (isSecurityBreach ? "BREACH DETECTED" : "SECURE"));
+            System.out.println("========================================");
 
             return result;
+
 
         } catch (Exception ex) {
             progressStatus = "failed";

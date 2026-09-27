@@ -55,6 +55,8 @@ public class CameraProcessingService {
 
     private final LiveActivityService liveActivityService;
 
+    private final ObjectActivityTracker objectActivityTracker;
+
 
     /*
      * ============================================================
@@ -156,7 +158,8 @@ public class CameraProcessingService {
             ObjectTracker objectTracker,
             EventRepository eventRepository,
             VideoRecorder videoRecorder,
-            LiveActivityService liveActivityService
+            LiveActivityService liveActivityService,
+            ObjectActivityTracker objectActivityTracker
     ) {
 
         this.cameraSource = cameraSource;
@@ -170,6 +173,8 @@ public class CameraProcessingService {
         this.videoRecorder = videoRecorder;
 
         this.liveActivityService = liveActivityService;
+
+        this.objectActivityTracker = objectActivityTracker;
     }
 
 
@@ -341,7 +346,8 @@ public class CameraProcessingService {
                  */
 
                 liveActivityService.update(
-                        trackedObjects
+                        trackedObjects,
+                        frame
                 );
 
 
@@ -609,6 +615,23 @@ public class CameraProcessingService {
                         finalActivity
                 );
             }
+
+            /*
+             * Real-time anomaly update: If an abnormal behavior is observed
+             * (FIGHTING, CROWD GATHERING, RUNNING, FALLEN, LOITERING),
+             * immediately update the active database event so alerts appear in real time!
+             */
+            if (activity.isAnomaly() && activeEvents.containsKey(objectId)) {
+                Event event = activeEvents.get(objectId);
+                if (event != null && (!event.isAnomaly() || !event.getDescription().contains(finalActivity))) {
+                    event.setAnomaly(true);
+                    event.setDescription(
+                            event.getObjectType() + " #" + objectId + " -> " + finalActivity
+                    );
+                    event.setBehaviorType(classifyBehaviorType(finalActivity));
+                    eventRepository.save(event);
+                }
+            }
         }
     }
 
@@ -808,7 +831,7 @@ public class CameraProcessingService {
                             event.getObjectType()
                                     + " #"
                                     + objectId
-                                    + " → "
+                                    + " -> "
                                     + finalActivity;
 
 
@@ -824,16 +847,16 @@ public class CameraProcessingService {
 
 
                     /*
-                     * Mark loitering as anomaly.
-                     *
-                     * Other activities remain normal.
+                     * Mark abnormal activities as anomaly:
+                     * FIGHTING, CROWD GATHERING, LOITERING, RUNNING, FALLEN, or other suspicious/anomalous behavior.
+                     * Normal activities (WALKING, STANDING, SITTING) remain non-anomalous.
                      */
 
-                    event.setAnomaly(
-                            finalActivity.equals(
-                                    "LOITERING"
-                            )
-                    );
+                    boolean isAnomaly = ObjectActivityTracker.isAbnormalBehavior(finalActivity);
+
+                    event.setAnomaly(isAnomaly);
+
+                    event.setBehaviorType(classifyBehaviorType(finalActivity));
 
 
                     /*
@@ -881,6 +904,26 @@ public class CameraProcessingService {
                 );
             }
         }
+    }
+
+
+    /*
+     * ============================================================
+     * BEHAVIOR TYPE CLASSIFIER
+     * Maps activity strings to standardized behavior type categories.
+     * ============================================================
+     */
+
+    private static String classifyBehaviorType(String activity) {
+        if (activity == null || activity.isBlank()) return "NORMAL";
+        String a = activity.toUpperCase();
+        if (a.contains("FIGHT") || a.contains("BRAWL") || a.contains("ASSAULT") || a.contains("ALTERCATION")) return "FIGHTING";
+        if (a.contains("CROWD") || a.contains("GATHERING") || a.contains("CONGREGAT")) return "CROWD_GATHERING";
+        if (a.contains("RUNNING") || a.contains("SPRINT") || a.contains("FLEE")) return "RUNNING";
+        if (a.contains("FALLEN") || a.contains("COLLAPSE")) return "FALLEN";
+        if (a.contains("LOITERING")) return "LOITERING";
+        if (a.contains("FAST")) return "SPEEDING";
+        return "NORMAL";
     }
 
 
@@ -985,89 +1028,106 @@ public class CameraProcessingService {
             Mat frame,
             List<TrackedObject> objects
     ) {
-
-        /*
-         * Green colour — matches screenshot exactly.
-         */
-        final Scalar GREEN  = new Scalar(0, 255, 0, 0);
         final Scalar BLACK  = new Scalar(0,   0, 0, 0);
-
         final int FONT      = opencv_imgproc.FONT_HERSHEY_SIMPLEX;
-        final double FONT_SCALE = 0.65;
+        final double FONT_SCALE = 0.60;
         final int THICKNESS = 2;
         final int BOX_THICKNESS = 2;
 
-
         for (TrackedObject object : objects) {
-
             Rect box = object.getBoundingBox();
 
+            // Retrieve live activity state
+            String activity = "DETECTED";
+            double speed = 0.0;
+            ObjectActivityTracker.ActivityState actState = objectActivityTracker.get(object.getId());
+            if (actState != null && actState.getActivity() != null) {
+                activity = actState.getActivity();
+                speed = actState.getSpeed();
+            }
 
-            /*
-             * Build label string: "person #6  75%"
-             */
-            String label =
-                    object.getLabel()
+            // High-visibility dynamic color scheme
+            Scalar boxColor = new Scalar(0, 255, 0, 0); // Green (default)
+            Scalar textColor = new Scalar(0, 255, 0, 0);
+            String badgeEmoji = "👁️";
+
+            if ("RUNNING".equalsIgnoreCase(activity) || "FLEEING".equalsIgnoreCase(activity)) {
+                boxColor = new Scalar(0, 69, 255, 0); // Vibrant Red-Orange
+                textColor = new Scalar(50, 140, 255, 0);
+                badgeEmoji = "🏃";
+            } else if ("WALKING".equalsIgnoreCase(activity)) {
+                boxColor = new Scalar(255, 191, 0, 0); // Vibrant Cyan / Sky Blue
+                textColor = new Scalar(255, 230, 120, 0);
+                badgeEmoji = "🚶";
+            } else if ("HAND MOVEMENT".equalsIgnoreCase(activity) || activity.toUpperCase().contains("HAND")) {
+                boxColor = new Scalar(220, 50, 220, 0); // Vibrant Magenta / Purple
+                textColor = new Scalar(255, 140, 255, 0);
+                badgeEmoji = "👋";
+            } else if ("FALLEN / COLLAPSED".equalsIgnoreCase(activity)) {
+                boxColor = new Scalar(0, 0, 255, 0); // Warning Red
+                textColor = new Scalar(100, 100, 255, 0);
+                badgeEmoji = "🚨";
+            } else if ("LOITERING".equalsIgnoreCase(activity)) {
+                boxColor = new Scalar(0, 215, 255, 0); // Amber Yellow
+                textColor = new Scalar(80, 230, 255, 0);
+                badgeEmoji = "⏱️";
+            } else if ("STANDING".equalsIgnoreCase(activity) || "SITTING".equalsIgnoreCase(activity)) {
+                boxColor = new Scalar(50, 220, 50, 0); // Spring Green
+                textColor = new Scalar(120, 255, 120, 0);
+                badgeEmoji = "🧍";
+            }
+
+            String activityBadge = "";
+            if ("RUNNING".equalsIgnoreCase(activity) || "WALKING".equalsIgnoreCase(activity)) {
+                activityBadge = " | [" + activity + "] (" + Math.round(speed) + " px/s)";
+            } else if (!"DETECTED".equalsIgnoreCase(activity) && !"STATIONARY".equalsIgnoreCase(activity)) {
+                activityBadge = " | [" + activity + "]";
+            }
+
+            String label = object.getLabel()
                     + " #" + object.getId()
-                    + "  "
+                    + " "
                     + Math.round(object.getConfidence() * 100)
-                    + "%";
+                    + "%"
+                    + activityBadge;
 
-
-            /*
-             * Measure label so we can draw a background rect.
-             */
             int[] baseLine = {0};
             Size textSize = opencv_imgproc.getTextSize(
                     label, FONT, FONT_SCALE, THICKNESS, baseLine
             );
 
-
-            /*
-             * Text origin: just above the top-left corner of the box.
-             * Keep it inside the frame.
-             */
-            int textX = box.x();
+            int textX = Math.max(0, box.x());
             int textY = Math.max(box.y() - 8, textSize.height() + 4);
 
-
-            /*
-             * Dark background pill behind the text.
-             */
+            // Dark background pill behind label for crisp readability
             opencv_imgproc.rectangle(
                     frame,
                     new Point(textX - 2, textY - textSize.height() - 4),
-                    new Point(textX + textSize.width() + 2, textY + baseLine[0]),
+                    new Point(textX + textSize.width() + 4, textY + baseLine[0] + 2),
                     BLACK,
                     opencv_imgproc.FILLED,
                     opencv_imgproc.LINE_8,
                     0
             );
 
-
-            /*
-             * Draw label text in green.
-             */
+            // Draw label text
             opencv_imgproc.putText(
                     frame,
                     label,
                     new Point(textX, textY),
                     FONT,
                     FONT_SCALE,
-                    GREEN,
+                    textColor,
                     THICKNESS,
                     opencv_imgproc.LINE_AA,
                     false
             );
 
-
-            /*
-             * Draw the bounding box.
-             */
+            // Draw bounding box
             opencv_imgproc.rectangle(
                     frame,
                     box,
-                    GREEN,
+                    boxColor,
                     BOX_THICKNESS,
                     opencv_imgproc.LINE_8,
                     0
@@ -1252,7 +1312,7 @@ public class CameraProcessingService {
                         event.getObjectType()
                                 + " #"
                                 + event.getObjectId()
-                                + " → "
+                                + " -> "
                                 + finalActivity;
 
 
@@ -1261,11 +1321,9 @@ public class CameraProcessingService {
                 );
 
 
-                event.setAnomaly(
-                        finalActivity.equals(
-                                "LOITERING"
-                        )
-                );
+                boolean isAnomaly = ObjectActivityTracker.isAbnormalBehavior(finalActivity);
+
+                event.setAnomaly(isAnomaly);
 
 
                 event.setEndTime(

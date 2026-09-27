@@ -23,3 +23,7 @@ recordings/
 # Environment and secrets
 .env
 application-local.properties
+
+# Scratch/test outputs
+analysis_output.json
+test_output.json

@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,6 +32,11 @@ public class RecordingController {
 
     private static final Path RECORDINGS_ROOT =
             Paths.get("recordings")
+                    .toAbsolutePath()
+                    .normalize();
+
+    private static final Path UPLOADED_ROOT =
+            Paths.get("data", "uploaded-videos")
                     .toAbsolutePath()
                     .normalize();
 
@@ -100,7 +108,159 @@ public class RecordingController {
             );
         }
 
+        // Also include analyzed uploaded video recordings
+        if (Files.isDirectory(UPLOADED_ROOT)) {
+            try (Stream<Path> upFiles = Files.list(UPLOADED_ROOT)) {
+                upFiles.filter(Files::isRegularFile)
+                        .filter(p -> {
+                            String name = p.getFileName().toString().toLowerCase();
+                            return name.endsWith(".mp4") || name.endsWith(".avi") || name.endsWith(".mov") || name.endsWith(".mkv");
+                        })
+                        .forEach(file -> {
+                            long size = 0L;
+                            try { size = Files.size(file); } catch (IOException ignored) {}
+                            result.add(Map.of(
+                                    "date", "uploaded",
+                                    "filename", file.getFileName().toString(),
+                                    "size", size,
+                                    "url", "/recordings/uploaded/" + file.getFileName()
+                            ));
+                        });
+            } catch (IOException ignored) {}
+        }
+
         return result;
+    }
+
+
+    /**
+     * Find best matching surveillance video recording for an event by timestamp & cameraId.
+     * GET /recordings/match?timestamp=2026-09-27T00:53:32.006274Z&cameraId=webcam-0
+     */
+    @GetMapping("/recordings/match")
+    public ResponseEntity<Map<String, Object>> matchRecording(
+            @RequestParam(required = false) String timestamp,
+            @RequestParam(required = false) String cameraId
+    ) {
+        if (!Files.isDirectory(RECORDINGS_ROOT)) {
+            return ResponseEntity.ok(Map.of("found", false, "message", "No recordings directory exists."));
+        }
+
+        // Check if cameraId directly matches an uploaded video file
+        if (cameraId != null && !cameraId.isBlank()) {
+            String safeName = Paths.get(cameraId).getFileName().toString();
+            Path directUploaded = UPLOADED_ROOT.resolve(safeName).normalize();
+            if (directUploaded.startsWith(UPLOADED_ROOT) && Files.isRegularFile(directUploaded)) {
+                return ResponseEntity.ok(Map.of(
+                        "found", true,
+                        "url", "/recordings/uploaded/" + safeName,
+                        "filename", safeName,
+                        "date", "uploaded",
+                        "offsetSeconds", 0.0
+                ));
+            }
+        }
+
+        Instant eventInstant = null;
+        if (timestamp != null && !timestamp.isBlank()) {
+            try {
+                eventInstant = Instant.parse(timestamp.trim());
+            } catch (Exception e1) {
+                try {
+                    long millis = Long.parseLong(timestamp.trim());
+                    eventInstant = Instant.ofEpochMilli(millis);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        List<Map<String, Object>> allRecs = listAllRecordings();
+        if (allRecs.isEmpty()) {
+            return ResponseEntity.ok(Map.of("found", false, "message", "No surveillance recordings available."));
+        }
+
+        // Prefer recordings with size > 0
+        List<Map<String, Object>> validRecs = new ArrayList<>();
+        for (Map<String, Object> r : allRecs) {
+            Object sizeObj = r.get("size");
+            if (sizeObj instanceof Number && ((Number) sizeObj).longValue() > 0) {
+                validRecs.add(r);
+            }
+        }
+        if (validRecs.isEmpty()) {
+            validRecs = allRecs;
+        }
+
+        if (eventInstant == null) {
+            Map<String, Object> latest = validRecs.get(validRecs.size() - 1);
+            return ResponseEntity.ok(Map.of(
+                    "found", true,
+                    "url", latest.get("url"),
+                    "filename", latest.get("filename"),
+                    "date", latest.get("date"),
+                    "offsetSeconds", 0
+            ));
+        }
+
+        long eventEpochSec = eventInstant.getEpochSecond();
+        String safeCamId = cameraId != null ? cameraId.replaceAll("[^a-zA-Z0-9_-]", "_") : "";
+
+        Map<String, Object> bestMatch = null;
+        double bestOffsetSec = 0.0;
+        long minDiffSec = Long.MAX_VALUE;
+
+        for (Map<String, Object> rec : validRecs) {
+            String rDate = String.valueOf(rec.get("date"));
+            String rFile = String.valueOf(rec.get("filename"));
+
+            try {
+                int lastUnderscore = rFile.lastIndexOf('_');
+                int dotMp4 = rFile.lastIndexOf(".mp4");
+                if (lastUnderscore > 0 && dotMp4 > lastUnderscore) {
+                    String timeStr = rFile.substring(lastUnderscore + 1, dotMp4);
+                    String[] parts = timeStr.split("-");
+                    if (parts.length == 3) {
+                        int h = Integer.parseInt(parts[0]);
+                        int m = Integer.parseInt(parts[1]);
+                        int s = Integer.parseInt(parts[2]);
+                        LocalDate recDate = LocalDate.parse(rDate);
+                        LocalDateTime recStartLocal = recDate.atTime(h, m, s);
+                        Instant recStartInstant = recStartLocal.atZone(ZoneId.systemDefault()).toInstant();
+                        long recStartSec = recStartInstant.getEpochSecond();
+
+                        long diff = eventEpochSec - recStartSec;
+                        boolean camMatches = safeCamId.isEmpty() || rFile.contains(safeCamId);
+
+                        if (diff >= -5 && diff < 3600) {
+                            long score = Math.abs(diff) + (camMatches ? 0 : 5000);
+                            if (score < minDiffSec) {
+                                minDiffSec = score;
+                                bestMatch = rec;
+                                bestOffsetSec = Math.max(0, diff);
+                            }
+                        } else {
+                            long absDiff = Math.abs(diff) + (camMatches ? 0 : 100000);
+                            if (absDiff < minDiffSec) {
+                                minDiffSec = absDiff;
+                                bestMatch = rec;
+                                bestOffsetSec = Math.max(0, diff);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (bestMatch == null) {
+            bestMatch = validRecs.get(validRecs.size() - 1);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "found", true,
+                "url", bestMatch.get("url"),
+                "filename", bestMatch.get("filename"),
+                "date", bestMatch.get("date"),
+                "offsetSeconds", bestOffsetSec
+        ));
     }
 
 
@@ -212,9 +372,6 @@ public class RecordingController {
             @PathVariable String filename
     ) {
 
-        LocalDate localDate =
-                parseDate(date);
-
         /*
          * Security:
          * prevent ../ path traversal.
@@ -229,22 +386,21 @@ public class RecordingController {
             );
         }
 
-        Path file =
-                RECORDINGS_ROOT
-                        .resolve(localDate.toString())
-                        .resolve(filename)
-                        .normalize();
-
-        if (!file.startsWith(RECORDINGS_ROOT)
-                || !Files.isRegularFile(file)
-                || !filename
-                .toLowerCase()
-                .endsWith(".mp4")) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Recording not found."
-            );
+        Path file;
+        if ("uploaded".equalsIgnoreCase(date)) {
+            file = UPLOADED_ROOT.resolve(filename).normalize();
+            if (!file.startsWith(UPLOADED_ROOT) || !Files.isRegularFile(file)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Uploaded video not found.");
+            }
+        } else {
+            LocalDate localDate = parseDate(date);
+            file = RECORDINGS_ROOT
+                    .resolve(localDate.toString())
+                    .resolve(filename)
+                    .normalize();
+            if (!file.startsWith(RECORDINGS_ROOT) || !Files.isRegularFile(file)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Recording not found.");
+            }
         }
 
         try {

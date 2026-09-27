@@ -113,6 +113,16 @@ public class Event {
 
 
     /*
+     * BEHAVIOR TYPE
+     * Classified suspicious behavior category.
+     * Examples: FIGHTING, CROWD_GATHERING, RUNNING, FALLEN, LOITERING, NORMAL
+     */
+
+    @Column
+    private String behaviorType;
+
+
+    /*
      * SIMILARITY
      *
      * Kept for compatibility with the existing event system.
@@ -267,6 +277,12 @@ public class Event {
     }
 
 
+    public String getBehaviorType() {
+
+        return behaviorType;
+    }
+
+
     /*
      * SETTERS
      */
@@ -306,5 +322,37 @@ public class Event {
 
         this.anomaly =
                 anomaly;
+    }
+
+
+    public void setCameraId(String cameraId) {
+        this.cameraId = cameraId;
+    }
+
+    public void setObjectId(Integer objectId) {
+        this.objectId = objectId;
+    }
+
+    public void setObjectType(String objectType) {
+        this.objectType = objectType;
+    }
+
+    public void setStartTime(Instant startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setTimestamp(Instant timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    /**
+     * Update the behavior type classification.
+     */
+    public void setBehaviorType(
+            String behaviorType
+    ) {
+
+        this.behaviorType =
+                behaviorType;
     }
 }
